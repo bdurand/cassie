@@ -278,8 +278,8 @@ module Cassie::Model
       Cassie.instance
     end
   
-    # Since Cassandra doesn't support offset we need to find the order key of the last record
-    # prior to the offset.
+    # Since Cassandra doesn't support offset we need to find the order key of record
+    # at the specified the offset.
     #
     # The key is a Hash describing the primary keys to search minus the last column defined
     # for the primary key. This column is assumed to be an ordering key. If it isn't, this
@@ -309,7 +309,7 @@ module Cassie::Model
         conditions.unshift(conditions_cql.join(" AND "))
       
         results = find_all(:select => [ordering_key], :where => conditions, :limit => limit, :order => order_cql)
-        last_row = results.last
+        last_row = results.last if results.size == limit
         last_id = last_row.send(ordering_key) if last_row
       
         if last_id.nil?
