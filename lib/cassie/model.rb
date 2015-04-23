@@ -125,17 +125,17 @@ module Cassie::Model
     # that is mapped to an actual keyspace name in the configuration. If the name
     # provided is not mapped in the configuration, then the raw value will be used.
     def keyspace=(name)
-      @_keyspace = name.to_s
+      self._keyspace = name.to_s
     end
     
     # Return the keyspace name where the table is located.
     def keyspace
-      connection.config.keyspace(@_keyspace)
+      connection.config.keyspace(_keyspace)
     end
     
     # Return the full table name including the keyspace.
     def full_table_name
-      if @_keyspace
+      if _keyspace
         "#{keyspace}.#{table_name}"
       else
         table_name
