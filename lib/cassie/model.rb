@@ -78,7 +78,7 @@ module Cassie::Model
       self._columns = _columns.merge(name => type_class)
       self._column_aliases = self._column_aliases.merge(name => name)
       
-      define_method("#{name}="){ |value| instance_variable_set(:"@#{name}", (value.nil? ? nil : type_class.new(value))) }
+      define_method("#{name}="){ |value| instance_variable_set(:"@#{name}", self.class.send(:coerce, value, type_class)) }
       attr_reader name
       if as && as.to_s != name.to_s
         self._column_aliases = self._column_aliases.merge(as => name)
@@ -342,7 +342,7 @@ module Cassie::Model
             values.concat(value)
           else
             cql << "#{col_name} = ?"
-            values << _columns[col_name].new(value)
+            values << coerce(value, _columns[col_name])
           end
         end
         [cql.join(' AND '), values]
@@ -352,6 +352,34 @@ module Cassie::Model
         [where, []]
       else
         raise ArgumentError.new("invalid CQL where clause #{where}")
+      end
+    end
+    
+    # Force a value to be the correct Cassandra data type.
+    def coerce(value, type_class)
+      if value.nil?
+        nil
+      elsif type_class == Cassandra::Types::Timeuuid && value.is_a?(Cassandra::TimeUuid)
+        value
+      elsif type_class == Cassandra::Types::Uuid
+        # Work around for bug in cassandra-driver 2.1.3
+        if value.is_a?(Cassandra::Uuid)
+          value
+        else
+          Cassandra::Uuid.new(value)
+        end
+      elsif type_class == Cassandra::Types::Timestamp && value.is_a?(String)
+        Time.parse(value)
+      elsif type_class == Cassandra::Types::Inet && value.is_a?(::IPAddr)
+        value
+      elsif type_class == Cassandra::Types::List
+        Array.new(value)
+      elsif type_class == Cassandra::Types::Set
+        Array.new(value).to_set
+      elsif type_class == Cassandra::Types::Map
+        Hash[value]
+      else
+        type_class.new(value)
       end
     end
   end

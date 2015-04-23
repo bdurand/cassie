@@ -178,4 +178,167 @@ describe Cassie::Model do
     end
   end
   
+  describe "type conversion" do
+    let(:model){ Cassie::TypeTester.new }
+    
+    it "should work with varchar columns" do
+      model.varchar = "foo"
+      model.varchar.should == "foo"
+      model.varchar = nil
+      model.varchar.should == nil
+    end
+    
+    it "should work with ascii columns" do
+      model.ascii = "foo"
+      model.ascii.should == "foo"
+      model.ascii = nil
+      model.ascii.should == nil
+    end
+    
+    it "should work with text columns" do
+      model.text = "foo"
+      model.text.should == "foo"
+      model.text = nil
+      model.text.should == nil
+    end
+    
+    it "should work with blob columns" do
+      model.blob = "foo"
+      model.blob.should == "foo"
+      model.blob = nil
+      model.blob.should == nil
+    end
+    
+    it "should work with int columns" do
+      model.int = "1"
+      model.int.should == 1
+      model.int = 2
+      model.int.should == 2
+      model.int = nil
+      model.int.should == nil
+    end
+    
+    it "should work with bigint columns" do
+      model.bigint = "1"
+      model.bigint.should == 1
+      model.bigint = 2
+      model.bigint.should == 2
+      model.bigint = nil
+      model.bigint.should == nil
+    end
+    
+    it "should work with varint columns" do
+      model.varint = "1"
+      model.varint.should == 1
+      model.varint = 2
+      model.varint.should == 2
+      model.varint = nil
+      model.varint.should == nil
+    end
+    
+    it "should work with counter columns" do
+      model.counter = "1"
+      model.counter.should == 1
+      model.counter = 2
+      model.counter.should == 2
+      model.counter = nil
+      model.counter.should == nil
+    end
+    
+    it "should work with float columns" do
+      model.float = "1.1"
+      model.float.should == 1.1
+      model.float = 2.2
+      model.float.should == 2.2
+      model.float = nil
+      model.float.should == nil
+    end
+    
+    it "should work with double columns" do
+      model.double = "1.1"
+      model.double.should == 1.1
+      model.double = 2.2
+      model.double.should == 2.2
+      model.double = nil
+      model.double.should == nil
+    end
+    
+    it "should work with decimal columns" do
+      model.decimal = "1.1"
+      model.decimal.should == 1.1
+      model.decimal.should be_a(BigDecimal)
+      model.decimal = BigDecimal.new("3.3", 2)
+      model.decimal.should == BigDecimal.new("3.3", 2)
+      model.decimal = nil
+      model.decimal.should == nil
+    end
+    
+    it "should work with timestamp columns" do
+      model.timestamp = "2015-04-23T15:23:30"
+      model.timestamp.should == Time.new(2015, 4, 23, 15, 23, 30)
+      model.timestamp = Time.new(2015, 4, 23, 15, 25, 30)
+      model.timestamp.should == Time.new(2015, 4, 23, 15, 25, 30)
+      model.timestamp = nil
+      model.timestamp.should == nil
+    end
+    
+    it "should work with boolean columns" do
+      model.boolean = true
+      model.boolean.should == true
+      model.boolean = false
+      model.boolean.should == false
+      model.boolean = nil
+      model.boolean.should == nil
+    end
+    
+    it "should work with inet columns" do
+      model.inet = "127.0.0.1"
+      model.inet.should == IPAddr.new("127.0.0.1")
+      model.inet = IPAddr.new("10.1.0.1")
+      model.inet.should == IPAddr.new("10.1.0.1")
+      model.inet = nil
+      model.inet.should == nil
+    end
+    
+    it "should work with uuid columns" do
+      model.uuid = "eed6d678-ea0b-11e4-8772-793f91a64daf"
+      model.uuid.should == Cassandra::Uuid.new("eed6d678-ea0b-11e4-8772-793f91a64daf")
+      model.uuid = Cassandra::Uuid.new("fed6d678-ea0b-11e4-8772-793f91a64daf")
+      model.uuid.should == Cassandra::Uuid.new("fed6d678-ea0b-11e4-8772-793f91a64daf")
+      model.uuid = nil
+      model.uuid.should == nil
+    end
+    
+    it "should work with timeuuid columns" do
+      model.timeuuid = "eed6d678-ea0b-11e4-8772-793f91a64daf"
+      model.timeuuid.should == Cassandra::TimeUuid.new("eed6d678-ea0b-11e4-8772-793f91a64daf")
+      model.timeuuid = Cassandra::TimeUuid.new("fed6d678-ea0b-11e4-8772-793f91a64daf")
+      model.timeuuid.should == Cassandra::TimeUuid.new("fed6d678-ea0b-11e4-8772-793f91a64daf")
+      model.timeuuid = nil
+      model.timeuuid.should == nil
+    end
+    
+    it "should work with list columns" do
+      model.list = ["a", "b", "c"]
+      model.list.should == ["a", "b", "c"]
+      model.list = nil
+      model.list.should == nil
+    end
+    
+    it "should work with set columns" do
+      model.set = ["a", "b", "c", "a"]
+      model.set.should == ["a", "b", "c"].to_set
+      model.set = nil
+      model.set.should == nil
+    end
+    
+    it "should work with map columns" do
+      model.map = [["a", "b"], ["c", "d"]]
+      model.map.should == {"a" => "b", "c" => "d"}
+      model.map = {"e" => "f", "g" => "h"}
+      model.map.should == {"e" => "f", "g" => "h"}
+      model.map = nil
+      model.map.should == nil
+    end
+  end
 end
