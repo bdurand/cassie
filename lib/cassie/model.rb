@@ -21,7 +21,7 @@ require 'active_support/hash_with_indifferent_access'
 #     self.primary_key = [:owner, :id]
 #   
 #     column :owner, :int
-#     column :id, :int, :as => :identifier, :null => true
+#     column :id, :int, :as => :identifier
 #     column :val, :varchar, :as => :value
 #   
 #     ordering_key :id, :desc
@@ -64,7 +64,7 @@ module Cassie::Model
     # the alias name in the methods that take an attributes hash.
     #
     # Defining a column will also define getter and setter methods for both the column name
-    # and the alias name (if specified). So `column :i, :int, as: id` will define the methods
+    # and the alias name (if specified). So `column :i, :int, as: :id` will define the methods
     # `i`, `i=`, `id`, and `id=`.
     def column(name, type, as: nil)
       name = name.to_sym
@@ -164,6 +164,7 @@ module Cassie::Model
       cql = "SELECT #{columns.join(', ')} FROM #{full_table_name}"
       values = nil
     
+      raise ArgumentError.new("Where clause cannot be blank. Pass :all to find all records.") if where.blank?
       if where && where != :all
         where_clause, values = cql_where_clause(where)
       else

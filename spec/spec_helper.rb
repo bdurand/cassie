@@ -16,7 +16,7 @@ RSpec.configure do |config|
   
   config.before(:suite) do
     schema_dir = File.expand_path("../schema", __FILE__)
-    Cassie.configure!(:host => 'localhost', :keyspaces => {"test" => "cassie_specs"}, :schema_directory => schema_dir, :max_prepared_statements => 3)
+    Cassie.configure!(:cluster => {:host => 'localhost'}, :keyspaces => {"test" => "cassie_specs"}, :schema_directory => schema_dir, :max_prepared_statements => 3)
     Cassie::Schema.load_all!
     Cassie::Testing.prepare!
   end

@@ -95,6 +95,11 @@ describe Cassie::Model do
       Cassie::Thing.count(:owner => 1).should == 2
       Cassie::Thing.count(:owner => 1, :id => 2).should == 1
     end
+    
+    it "won't find all records with a blank where clause" do
+      expect{ Cassie::Thing.find_all(where: {}) }.to raise_error
+      Cassie::Thing.find_all(where: :all).size.should == 3
+    end
   end
   
   describe "offset_to_id" do

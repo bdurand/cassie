@@ -24,7 +24,7 @@ class Thing
   # All columns are explicitly defined with their name and data type and an optional
   # alias name.
   column :owner, :int
-  column :id, :int, :as => :identifier, :null => true
+  column :id, :int, :as => :identifier
   column :val, :varchar, :as => :value
   
   # The ordering keys should also be defined along with how they are ordered.
@@ -39,7 +39,9 @@ class Thing
   ...
 end
 
-Thing.create(:owner => 1, :identifier => 2)
+Cassie.configure!(:host => "localhost")
+
+Thing.create(:owner => 1, :identifier => 2, :value => "woot")
 
 owner_records = Thing.find_all(where: {:owner => 1})
 
@@ -52,15 +54,27 @@ record.destroy
 
 ## Features
 
-Cassie is intentionally limited in the features it offers due to the nature of Cassandra tables and the limited ways in which you can efficiently access your data. At We Heart It we initially tried to develop a more full featured framework that would provide all the goodies you get with something like ActiveRecord. However, we found that this just encouraged us to think of our Cassandra data too generically and do things that just didn't scale. As a result we paired back the features to just what was actually useful.
-
 To add the Cassie behaviors to your model you just need to incude `Cassie::Model` in your class.
 
-### Explicitly define data structure
+### Configuration
 
-Since all aspects of working with Cassandra tables is very tightly tied to their data structure, we make you explicitly define it in you Ruby objects. That way it's all there where the developer can see it and the code can enforce certain things if it needs to.
+You need to configure Cassie before using it. Cassie can only connect to a single Cassandra cluster. To configure Cassie you need to call the Cassie.configure! method with a hash. The options for the hash can be either strings or symbols.
 
-At a minimum you need to define the table, keyspace, primary key, and columns. For each column you need to define 
+The options should contain all the options to define your cluster connection (see http://datastax.github.io/ruby-driver/api/#cluster-class_method)
+
+You can also pass the following options:
+
+* :cluster - Options to connect to the cluster. See http://datastax.github.io/ruby-driver/api/#cluster-class_method
+* :keyspaces - Map of abstract keyspace names to actual keyspace names. This is provided so that you can have handle to reference keyspaces where the actual keyspace names change from environment to environment.
+* :default_keyspace - The default keyspace to be used for the connection. All tables will be assumed to exist in this keyspace. (optional)
+* :max_prepared_statements - The limit of the number of prepared statements that will be saved on the client. (default 1000)
+* :schema_directory - Path to a directory where the schmea files are kept. This value should only be set in development and testing environments. (optional)
+
+### Explicitly defined data structure
+
+Since all aspects of working with Cassandra tables are very tightly tied to their data structures, we make you explicitly define it in you Ruby objects. That way it's all there where the developer can see it and the code can enforce certain things if it needs to.
+
+At a minimum you need to define the table, keyspace, primary key, and columns. For each column you need to define both the name and data type.
 
 ### ActiveModel validations and callbacks
 
@@ -86,7 +100,7 @@ Thing.find_all(where: ["owner = ?", 1])            # Will use pepared statement
 Thing.find_all(where: Cassie.prepare("owner = 1")) # Will use pepared statement
 ```
 
-The prepared statement cache is limited (default size is 1000 entries). For best performance you should ensure that you aren't preparing statements with arbitrary value interpolated into the CQL. Otherwise your prepared statement cache will turn over frequently and you'll lose the performance advantages it provides.
+The prepared statement cache is capped to 1000 statements by default. For best performance you should ensure that you aren't preparing statements with arbitrary value interpolated into the CQL; otherwise your prepared statement cache will turn over frequently and you'll lose the performance advantages it provides.
 
 ```ruby
 Thing.find_all(where: ["owner = #{user.id} AND id > ?", id])  # This type of thing is very bad for the statement cache.
@@ -104,6 +118,8 @@ Thing.batch do
   Thing.create(:owner => 1, :identifier => 2, :value => 'foo')
 end
 ```
+
+Cassandra can perform better when sending statements as a batch. Batching also ensures that all the statements are received by the cluster. They won't all be persisted as a unit like in a relational database transaction, but they will all be eventually persisted.
 
 ### Support for short column names
 

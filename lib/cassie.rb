@@ -79,8 +79,8 @@ class Cassie
   
   # Open a connection to the Cassandra cluster.
   def connect
-    cluster = Cassandra.cluster(config.cluster_options)
-    logger.info("Cassie.connect with #{config.sanitized_cluster_options}") if logger
+    cluster = Cassandra.cluster(config.cluster)
+    logger.info("Cassie.connect with #{config.sanitized_cluster}") if logger
     @monitor.synchronize do
       @session = cluster.connect(config.default_keyspace)
       @prepared_statements = {}
@@ -89,7 +89,7 @@ class Cassie
 
   # Close the connections to the Cassandra cluster.
   def disconnect
-    logger.info("Cassie.disconnect from #{config.sanitized_cluster_options}") if logger
+    logger.info("Cassie.disconnect from #{config.sanitized_cluster}") if logger
     @monitor.synchronize do
       @session.close if @session
       @session = nil
