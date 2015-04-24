@@ -206,6 +206,8 @@ You'll need something similar on other web servers. In any case, you'll want to 
 
 ### Limitations
 
+Ruby 2.0 (or compatible) required.
+
 You can only use one Cassandra cluster with Cassie since it only maintains a single connection. You can, however, use multiple keyspaces within the cluster.
 
 Query methods will not gracefully handle querying records by values other than primary keys. Even though Cassandra will let you do this by passing extra options, Cassie doesn't handle it since it just encourages bad practices. If you need to perform such queries you can always send raw CQL to Cassie#execute.
