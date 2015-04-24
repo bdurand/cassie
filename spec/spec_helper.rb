@@ -1,4 +1,4 @@
-require 'cassie'
+require 'whi-cassie'
 require File.expand_path('../models/thing', __FILE__)
 require File.expand_path('../models/type_tester', __FILE__)
 
