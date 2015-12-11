@@ -1,8 +1,11 @@
 require 'cassandra'
+require 'new_relic/agent/method_tracer'
 
 # This class provides a lightweight wrapper around the Cassandra driver. It provides
 # a foundation for maintaining a connection and constructing CQL statements.
 class Cassie
+  include ::NewRelic::Agent::MethodTracer
+
   require File.expand_path("../cassie/config.rb", __FILE__)
   require File.expand_path("../cassie/model.rb", __FILE__)
   require File.expand_path("../cassie/schema.rb", __FILE__)
@@ -277,6 +280,8 @@ class Cassie
       end
     end
   end
+
+  add_method_tracer :execute, 'Custom/cassie_execute'
 
   private
   
