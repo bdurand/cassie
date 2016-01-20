@@ -97,7 +97,7 @@ describe Cassie::Model do
     end
     
     it "won't find all records with a blank where clause" do
-      expect{ Cassie::Thing.find_all(where: {}) }.to raise_error
+      expect{ Cassie::Thing.find_all(where: {}) }.to raise_error(ArgumentError)
       Cassie::Thing.find_all(where: :all).size.should == 3
     end
   end
@@ -116,6 +116,8 @@ describe Cassie::Model do
       Cassie::Thing.offset_to_id({:owner => 1}, 3, batch_size: 1).should == 2
       Cassie::Thing.offset_to_id({:owner => 1}, 4, batch_size: 1).should == nil
       Cassie::Thing.offset_to_id({:owner => 1}, 4, batch_size: 100).should == nil
+      Cassie::Thing.offset_to_id({:owner => 1}, 1, batch_size: 1, min: 3).should == 4
+      Cassie::Thing.offset_to_id({:owner => 1}, 1, order: :desc, batch_size: 1, max: 5).should == 3
     end
   end
   

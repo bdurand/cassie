@@ -288,13 +288,16 @@ module Cassie::Model
     #
     # The order argument can be used to specify an order for the ordering key (:asc or :desc).
     # It will default to the natural order of the last ordering key as defined by the ordering_key method.
-    def offset_to_id(key, offset, order: nil, batch_size: 1000)
+    #
+    # The min and max can be used to limit the offset calculation to a range of values (exclusive).
+    def offset_to_id(key, offset, order: nil, batch_size: 1000, min: nil, max: nil)
       ordering_key = primary_key.last
       cluster_order = _ordering_keys[ordering_key] || :asc
       order ||= cluster_order
       order_cql = "#{ordering_key} #{order}" unless order == cluster_order
       
-      from = nil
+      from = (order == :desc ? max : min)
+      to = (order == :desc ? min : max)
       loop do
         limit = (offset > batch_size ? batch_size : offset + 1)
         conditions_cql = []
@@ -303,12 +306,16 @@ module Cassie::Model
           conditions_cql << "#{ordering_key} #{order == :desc ? '<' : '>'} ?"
           conditions << from
         end
+        if to
+          conditions_cql << "#{ordering_key} #{order == :desc ? '>' : '<'} ?"
+          conditions << to
+        end
         key.each do |name, value|
           conditions_cql << "#{column_name(name)} = ?"
           conditions << value
         end
         conditions.unshift(conditions_cql.join(" AND "))
-      
+
         results = find_all(:select => [ordering_key], :where => conditions, :limit => limit, :order => order_cql)
         last_row = results.last if results.size == limit
         last_id = last_row.send(ordering_key) if last_row
