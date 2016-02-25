@@ -56,6 +56,7 @@ class Cassie::Config
     options[:passphrase] = "SUPPRESSED" if options.include?(:passphrase)
     options[:credentials] = "SUPPRESSED" if options.include?(:credentials)
     options[:auth_provider] = "SUPPRESSED" if options.include?(:auth_provider)
+    options[:logger] = options[:logger].class.name if options.include?(:logger)
     options
   end
   

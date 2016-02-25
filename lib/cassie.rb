@@ -79,8 +79,11 @@ class Cassie
   
   # Open a connection to the Cassandra cluster.
   def connect
-    cluster = Cassandra.cluster(config.cluster)
-    logger.info("Cassie.connect with #{config.sanitized_cluster}") if logger
+    start_time = Time.now
+    cluster_config = config.cluster
+    cluster_config = cluster_config.merge(:logger => logger) if logger
+    cluster = Cassandra.cluster(cluster_config)
+    logger.info("Cassie.connect with #{config.sanitized_cluster} in #{((Time.now - start_time) * 1000).round}ms") if logger
     @monitor.synchronize do
       @session = cluster.connect(config.default_keyspace)
       @prepared_statements = {}
