@@ -189,163 +189,318 @@ describe Cassie::Model do
     let(:model){ Cassie::TypeTester.new }
     
     it "should work with varchar columns" do
-      model.varchar = "foo"
-      model.varchar.should == "foo"
-      model.varchar = nil
-      model.varchar.should == nil
+      model.varchar_value = "foo"
+      model.varchar_value.should == "foo"
+      model.save
+      id = model.id
+      model = Cassie::TypeTester.find(:id => id)
+      model.varchar_value.should == "foo"
+      
+      model.varchar_value = nil
+      model.varchar_value.should == nil
+      model.save
+      model = Cassie::TypeTester.find(:id => id)
+      model.varchar_value.should == nil
     end
     
     it "should work with ascii columns" do
-      model.ascii = "foo"
-      model.ascii.should == "foo"
-      model.ascii = nil
-      model.ascii.should == nil
+      model.ascii_value = "foo"
+      model.ascii_value.should == "foo"
+      model.save
+      id = model.id
+      model = Cassie::TypeTester.find(:id => id)
+      model.ascii_value.should == "foo"
+
+      model.ascii_value = nil
+      model.ascii_value.should == nil
+      model.save
+      model = Cassie::TypeTester.find(:id => id)
+      model.ascii_value.should == nil
     end
     
     it "should work with text columns" do
-      model.text = "foo"
-      model.text.should == "foo"
-      model.text = nil
-      model.text.should == nil
+      model.text_value = "foo"
+      model.text_value.should == "foo"
+      model.save
+      id = model.id
+      model = Cassie::TypeTester.find(:id => id)
+      model.text_value.should == "foo"
+
+      model.text_value = nil
+      model.text_value.should == nil
+      model.save
+      model = Cassie::TypeTester.find(:id => id)
+      model.text_value.should == nil
     end
     
     it "should work with blob columns" do
-      model.blob = "foo"
-      model.blob.should == "foo"
-      model.blob = nil
-      model.blob.should == nil
+      model.blob_value = "foo"
+      model.blob_value.should == "foo"
+      model.save
+      id = model.id
+      model = Cassie::TypeTester.find(:id => id)
+      model.blob_value.should == "foo"
+
+      model.blob_value = nil
+      model.blob_value.should == nil
+      model.save
+      model = Cassie::TypeTester.find(:id => id)
+      model.blob_value.should == nil
     end
     
     it "should work with int columns" do
-      model.int = "1"
-      model.int.should == 1
-      model.int = 2
-      model.int.should == 2
-      model.int = nil
-      model.int.should == nil
+      model.int_value = "1"
+      model.int_value.should == 1
+      model.int_value = 2
+      model.int_value.should == 2
+      model.save
+      id = model.id
+      model = Cassie::TypeTester.find(:id => id)
+      model.int_value.should == 2
+
+      model.int_value = nil
+      model.int_value.should == nil
+      model.save
+      model = Cassie::TypeTester.find(:id => id)
+      model.int_value.should == nil
     end
     
     it "should work with bigint columns" do
-      model.bigint = "1"
-      model.bigint.should == 1
-      model.bigint = 2
-      model.bigint.should == 2
-      model.bigint = nil
-      model.bigint.should == nil
+      model.bigint_value = "1"
+      model.bigint_value.should == 1
+      model.bigint_value = 2
+      model.bigint_value.should == 2
+      model.save
+      id = model.id
+      model = Cassie::TypeTester.find(:id => id)
+      model.bigint_value.should == 2
+
+      model.bigint_value = nil
+      model.bigint_value.should == nil
+      model.save
+      model = Cassie::TypeTester.find(:id => id)
+      model.bigint_value.should == nil
     end
     
     it "should work with varint columns" do
-      model.varint = "1"
-      model.varint.should == 1
-      model.varint = 2
-      model.varint.should == 2
-      model.varint = nil
-      model.varint.should == nil
-    end
-    
-    it "should work with counter columns" do
-      model.counter = "1"
-      model.counter.should == 1
-      model.counter = 2
-      model.counter.should == 2
-      model.counter = nil
-      model.counter.should == nil
+      model.varint_value = "1"
+      model.varint_value.should == 1
+      model.varint_value = 2
+      model.varint_value.should == 2
+      model.save
+      id = model.id
+      model = Cassie::TypeTester.find(:id => id)
+      model.varint_value.should == 2
+
+      model.varint_value = nil
+      model.varint_value.should == nil
+      model.save
+      model = Cassie::TypeTester.find(:id => id)
+      model.varint_value.should == nil
     end
     
     it "should work with float columns" do
-      model.float = "1.1"
-      model.float.should == 1.1
-      model.float = 2.2
-      model.float.should == 2.2
-      model.float = nil
-      model.float.should == nil
+      model.float_value = "1.1"
+      model.float_value.should == 1.1
+      model.float_value = 2.2
+      model.float_value.should == 2.2
+      model.save
+      id = model.id
+      model = Cassie::TypeTester.find(:id => id)
+      model.float_value.round(4).should == 2.2
+
+      model.float_value = nil
+      model.float_value.should == nil
+      model.save
+      model = Cassie::TypeTester.find(:id => id)
+      model.float_value.should == nil
     end
     
     it "should work with double columns" do
-      model.double = "1.1"
-      model.double.should == 1.1
-      model.double = 2.2
-      model.double.should == 2.2
-      model.double = nil
-      model.double.should == nil
+      model.double_value = "1.1"
+      model.double_value.should == 1.1
+      model.double_value = 2.2
+      model.double_value.should == 2.2
+      model.save
+      id = model.id
+      model = Cassie::TypeTester.find(:id => id)
+      model.double_value.should == 2.2
+
+      model.double_value = nil
+      model.double_value.should == nil
+      model.save
+      model = Cassie::TypeTester.find(:id => id)
+      model.double_value.should == nil
     end
     
     it "should work with decimal columns" do
-      model.decimal = "1.1"
-      model.decimal.should == 1.1
-      model.decimal.should be_a(BigDecimal)
-      model.decimal = BigDecimal.new("3.3", 2)
-      model.decimal.should == BigDecimal.new("3.3", 2)
-      model.decimal = nil
-      model.decimal.should == nil
+      model.decimal_value = "1.1"
+      model.decimal_value.should == 1.1
+      model.decimal_value.should be_a(BigDecimal)
+      model.decimal_value = BigDecimal.new("3.3", 2)
+      model.decimal_value.should == BigDecimal.new("3.3", 2)
+      model.save
+      id = model.id
+      model = Cassie::TypeTester.find(:id => id)
+      model.decimal_value.should == BigDecimal.new("3.3", 2)
+
+      model.decimal_value = nil
+      model.decimal_value.should == nil
+      model.save
+      model = Cassie::TypeTester.find(:id => id)
+      model.decimal_value.should == nil
     end
     
     it "should work with timestamp columns" do
-      model.timestamp = "2015-04-23T15:23:30"
-      model.timestamp.should == Time.new(2015, 4, 23, 15, 23, 30)
-      model.timestamp = Time.new(2015, 4, 23, 15, 25, 30)
-      model.timestamp.should == Time.new(2015, 4, 23, 15, 25, 30)
-      model.timestamp = nil
-      model.timestamp.should == nil
+      model.timestamp_value = "2015-04-23T15:23:30"
+      model.timestamp_value.should == Time.new(2015, 4, 23, 15, 23, 30)
+      model.timestamp_value = Time.new(2015, 4, 23, 15, 25, 30)
+      model.timestamp_value.should == Time.new(2015, 4, 23, 15, 25, 30)
+      model.save
+      id = model.id
+      model = Cassie::TypeTester.find(:id => id)
+      model.timestamp_value.should == Time.new(2015, 4, 23, 15, 25, 30)
+
+      model.timestamp_value = nil
+      model.timestamp_value.should == nil
+      model.save
+      model = Cassie::TypeTester.find(:id => id)
+      model.timestamp_value.should == nil
     end
     
     it "should work with boolean columns" do
-      model.boolean = true
-      model.boolean.should == true
-      model.boolean = false
-      model.boolean.should == false
-      model.boolean = nil
-      model.boolean.should == nil
+      model.boolean_value = true
+      model.boolean_value.should == true
+      model.boolean_value = false
+      model.boolean_value.should == false
+      model.save
+      id = model.id
+      model = Cassie::TypeTester.find(:id => id)
+      model.boolean_value.should == false
+
+      model.boolean_value = nil
+      model.boolean_value.should == nil
+      model.save
+      model = Cassie::TypeTester.find(:id => id)
+      model.boolean_value.should == nil
     end
     
     it "should work with inet columns" do
-      model.inet = "127.0.0.1"
-      model.inet.should == IPAddr.new("127.0.0.1")
-      model.inet = IPAddr.new("10.1.0.1")
-      model.inet.should == IPAddr.new("10.1.0.1")
-      model.inet = nil
-      model.inet.should == nil
+      model.inet_value = "127.0.0.1"
+      model.inet_value.should == IPAddr.new("127.0.0.1")
+      model.inet_value = IPAddr.new("10.1.0.1")
+      model.inet_value.should == IPAddr.new("10.1.0.1")
+      model.save
+      id = model.id
+      model = Cassie::TypeTester.find(:id => id)
+      model.inet_value.should == IPAddr.new("10.1.0.1")
+      
+      model.inet_value = nil
+      model.inet_value.should == nil
+      model.save
+      model = Cassie::TypeTester.find(:id => id)
+      model.inet_value.should == nil
     end
     
     it "should work with uuid columns" do
-      model.uuid = "eed6d678-ea0b-11e4-8772-793f91a64daf"
-      model.uuid.should == Cassandra::Uuid.new("eed6d678-ea0b-11e4-8772-793f91a64daf")
-      model.uuid = Cassandra::Uuid.new("fed6d678-ea0b-11e4-8772-793f91a64daf")
-      model.uuid.should == Cassandra::Uuid.new("fed6d678-ea0b-11e4-8772-793f91a64daf")
-      model.uuid = nil
-      model.uuid.should == nil
+      model.uuid_value = "eed6d678-ea0b-11e4-8772-793f91a64daf"
+      model.uuid_value.should == Cassandra::Uuid.new("eed6d678-ea0b-11e4-8772-793f91a64daf")
+      model.uuid_value = Cassandra::Uuid.new("fed6d678-ea0b-11e4-8772-793f91a64daf")
+      model.uuid_value.should == Cassandra::Uuid.new("fed6d678-ea0b-11e4-8772-793f91a64daf")
+      model.save
+      id = model.id
+      model = Cassie::TypeTester.find(:id => id)
+      model.uuid_value.should == Cassandra::Uuid.new("fed6d678-ea0b-11e4-8772-793f91a64daf")
+
+      model.uuid_value = nil
+      model.uuid_value.should == nil
+      model.save
+      model = Cassie::TypeTester.find(:id => id)
+      model.uuid_value.should == nil
     end
     
     it "should work with timeuuid columns" do
-      model.timeuuid = "eed6d678-ea0b-11e4-8772-793f91a64daf"
-      model.timeuuid.should == Cassandra::TimeUuid.new("eed6d678-ea0b-11e4-8772-793f91a64daf")
-      model.timeuuid = Cassandra::TimeUuid.new("fed6d678-ea0b-11e4-8772-793f91a64daf")
-      model.timeuuid.should == Cassandra::TimeUuid.new("fed6d678-ea0b-11e4-8772-793f91a64daf")
-      model.timeuuid = nil
-      model.timeuuid.should == nil
+      model.timeuuid_value = "eed6d678-ea0b-11e4-8772-793f91a64daf"
+      model.timeuuid_value.should == Cassandra::TimeUuid.new("eed6d678-ea0b-11e4-8772-793f91a64daf")
+      model.timeuuid_value = Cassandra::TimeUuid.new("fed6d678-ea0b-11e4-8772-793f91a64daf")
+      model.timeuuid_value.should == Cassandra::TimeUuid.new("fed6d678-ea0b-11e4-8772-793f91a64daf")
+      model.save
+      id = model.id
+      model = Cassie::TypeTester.find(:id => id)
+      model.timeuuid_value.should == Cassandra::TimeUuid.new("fed6d678-ea0b-11e4-8772-793f91a64daf")
+
+      model.timeuuid_value = nil
+      model.timeuuid_value.should == nil
+      model.save
+      model = Cassie::TypeTester.find(:id => id)
+      model.timeuuid_value.should == nil
     end
     
     it "should work with list columns" do
-      model.list = ["a", "b", "c"]
-      model.list.should == ["a", "b", "c"]
-      model.list = nil
-      model.list.should == nil
+      model.list_value = ["a", "b", "c"]
+      model.list_value.should == ["a", "b", "c"]
+      model.save
+      id = model.id
+      model = Cassie::TypeTester.find(:id => id)
+      model.list_value.should == ["a", "b", "c"]
+
+      model.list_value = nil
+      model.list_value.should == nil
+      model.save
+      model = Cassie::TypeTester.find(:id => id)
+      model.list_value.should == nil
     end
     
     it "should work with set columns" do
-      model.set = ["a", "b", "c", "a"]
-      model.set.should == ["a", "b", "c"].to_set
-      model.set = nil
-      model.set.should == nil
+      model.set_value = ["a", "b", "c", "a"]
+      model.set_value.should == ["a", "b", "c"].to_set
+      model.save
+      id = model.id
+      model = Cassie::TypeTester.find(:id => id)
+      model.set_value.should == ["a", "b", "c"].to_set
+
+      model.set_value = nil
+      model.set_value.should == nil
+      model.save
+      model = Cassie::TypeTester.find(:id => id)
+      model.set_value.should == nil
     end
     
     it "should work with map columns" do
-      model.map = [["a", "b"], ["c", "d"]]
-      model.map.should == {"a" => "b", "c" => "d"}
-      model.map = {"e" => "f", "g" => "h"}
-      model.map.should == {"e" => "f", "g" => "h"}
-      model.map = nil
-      model.map.should == nil
+      model.map_value = [["a", "b"], ["c", "d"]]
+      model.map_value.should == {"a" => "b", "c" => "d"}
+      model.map_value = {"e" => "f", "g" => "h"}
+      model.map_value.should == {"e" => "f", "g" => "h"}
+      model.save
+      id = model.id
+      model = Cassie::TypeTester.find(:id => id)
+      model.map_value.should == {"e" => "f", "g" => "h"}
+
+      model.map_value = nil
+      model.map_value.should == nil
+      model.save
+      model = Cassie::TypeTester.find(:id => id)
+      model.map_value.should == nil
+    end
+    
+    it "should work with counter columns" do
+      id = SecureRandom.uuid
+      model = Cassie::TypeTesterCounter.new(:id => id)
+      model.counter_value.should == 0
+      model.increment_counter_value!
+      model.counter_value.should == 1
+      model = Cassie::TypeTesterCounter.find(:id => id)
+      model.counter_value.should == 1
+
+      model.increment_counter_value!
+      model.counter_value.should == 2
+      model = Cassie::TypeTesterCounter.find(:id => id)
+      model.counter_value.should == 2
+      
+      model.decrement_counter_value!
+      model.counter_value.should == 1
+      model = Cassie::TypeTesterCounter.find(:id => id)
+      model.counter_value.should == 1
     end
   end
 end

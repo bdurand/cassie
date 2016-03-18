@@ -1,3 +1,7 @@
+1.0.3
+
+Fix bugs preventing counter and set data types from working on models.
+
 1.0.2
 
 Set cluster logger on the Cassandra cluster if not already set.

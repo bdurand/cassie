@@ -46,6 +46,7 @@ module Cassie::Model
     class_attribute :_columns, :instance_reader => false, :instance_writer => false
     class_attribute :_column_aliases, :instance_reader => false, :instance_writer => false
     class_attribute :_ordering_keys, :instance_reader => false, :instance_writer => false
+    class_attribute :_counter_table, :instance_reader => false, :instance_writer => false
     define_model_callbacks :create, :update, :save, :destroy
     self._columns = {}
     self._column_aliases = HashWithIndifferentAccess.new
@@ -66,6 +67,11 @@ module Cassie::Model
     # Defining a column will also define getter and setter methods for both the column name
     # and the alias name (if specified). So `column :i, :int, as: :id` will define the methods
     # `i`, `i=`, `id`, and `id=`.
+    #
+    # If you define a counter column then it will define methods for `increment_i!` and `decrement_i!`
+    # which take an optional amount argument. Note that if you have a counter column you cannot have
+    # any other non-primary key columns and you cannot call create, update, or save and must use the
+    # increment and decrement commands.
     def column(name, type, as: nil)
       name = name.to_sym
       type_class = nil
@@ -77,13 +83,33 @@ module Cassie::Model
       
       self._columns = _columns.merge(name => type_class)
       self._column_aliases = self._column_aliases.merge(name => name)
-      
-      define_method("#{name}="){ |value| instance_variable_set(:"@#{name}", self.class.send(:coerce, value, type_class)) }
-      attr_reader name
-      if as && as.to_s != name.to_s
+
+      aliased = (as && as.to_s != name.to_s)
+      if aliased
         self._column_aliases = self._column_aliases.merge(as => name)
-        define_method(as){ send(name) }
-        define_method("#{as}="){|value| send("#{name}=", value) }
+      end
+
+      if type.to_s == "counter".freeze
+        self._counter_table = true
+        
+        define_method(name){ instance_variable_get(:"@#{name}") || 0 }
+        define_method("#{name}="){ |value| instance_variable_set(:"@#{name}", value.to_i) }
+        
+        define_method("increment_#{name}!"){ |amount=1, ttl: nil| send(:adjust_counter!, name, amount, ttl: ttl) }
+        define_method("decrement_#{name}!"){ |amount=1, ttl: nil| send(:adjust_counter!, name, -amount, ttl: ttl) }
+        if aliased
+          define_method(as){ send(name) }
+          define_method("increment_#{as}!"){ |amount=1, ttl: nil| send("increment_#{name}!", amount, ttl: ttl) }
+          define_method("decrement_#{as}!"){ |amount=1, ttl: nil| send("increment_#{name}!", amount, ttl: ttl) }
+        end
+      else
+        attr_reader name
+        define_method("#{name}="){ |value| instance_variable_set(:"@#{name}", self.class.send(:coerce, value, type_class)) }
+        attr_reader name
+        if aliased
+          define_method(as){ send(name) }
+          define_method("#{as}="){|value| send("#{name}=", value) }
+        end
       end
     end
     
@@ -383,7 +409,7 @@ module Cassie::Model
       elsif type_class == Cassandra::Types::List
         Array.new(value)
       elsif type_class == Cassandra::Types::Set
-        Array.new(value).to_set
+        Set.new(value)
       elsif type_class == Cassandra::Types::Map
         Hash[value]
       else
@@ -402,20 +428,26 @@ module Cassie::Model
     @persisted
   end
   
+  # Return true if the table is used for a counter.
+  def counter_table?
+    !!self.class._counter_table
+  end
+  
   # Save a record. Returns true if the record was persisted and false if it was invalid.
   # This method will run the save callbacks as well as either the update or create
   # callbacks as necessary.
   def save(validate: true, ttl: nil)
+    raise ArgumentError.new("Cannot call save on a counter table") if counter_table?
     valid_record = (validate ? valid? : true)
     if valid_record
       run_callbacks(:save) do
         if persisted?
           run_callbacks(:update) do
-            self.class.connection.update(self.class.full_table_name, values_hash, key_hash, :ttl => persistence_ttl || ttl)
+            self.class.connection.update(self.class.full_table_name, values_hash, key_hash, :ttl => (ttl || persistence_ttl))
           end
         else
           run_callbacks(:create) do
-            self.class.connection.insert(self.class.full_table_name, attributes, :ttl => persistence_ttl || ttl)
+            self.class.connection.insert(self.class.full_table_name, attributes, :ttl => (ttl || persistence_ttl))
             @persisted = true
           end
         end
@@ -478,12 +510,26 @@ module Cassie::Model
   
   private
   
+  # Used for updating counter columns.
+  def adjust_counter!(name, amount, ttl: nil)
+    amount = amount.to_i
+    if amount != 0
+      run_callbacks(:update) do
+        adjustment = (amount < 0 ? "#{name} = #{name} - #{amount.abs}" : "#{name} = #{name} + #{amount}")
+        self.class.connection.update(self.class.full_table_name, adjustment, key_hash, :ttl => (ttl || persistence_ttl))
+      end
+    end
+    record = self.class.find(key_hash)
+    value = (record ? record.send(name) : send(name) + amount)
+    send("#{name}=", value)
+  end
+  
   # Returns a hash of value except for the ones that constitute the primary key
   def values_hash
     pk = self.class.primary_key
     hash = {}
     self.class.column_names.each do |name|
-      hash[name] = send(name) unless pk.include?(name)
+      hash[name] = send(name) unless pk.include?(name) 
     end
     hash
   end

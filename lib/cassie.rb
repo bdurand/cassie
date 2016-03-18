@@ -219,9 +219,13 @@ class Cassie
     key_cql, key_values = key_clause(key_hash)
     update_cql = []
     update_values = []
-    values_hash.each do |column, value|
-      update_cql << "#{column} = ?"
-      update_values << value
+    if values_hash.is_a?(String)
+      update_cql << values_hash
+    else
+      values_hash.each do |column, value|
+        update_cql << "#{column} = ?"
+        update_values << value
+      end
     end
     values = update_values + key_values
     
