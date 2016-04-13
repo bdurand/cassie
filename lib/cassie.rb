@@ -16,7 +16,7 @@ class Cassie
     attr_reader :record
     
     def initialize(record)
-      super
+      super("Errors on #{record.class.name}: #{record.errors.to_hash.inspect}")
       @record = record
     end
   end

@@ -1,3 +1,7 @@
+1.0.4
+
+Set less cryptic error message for invalid records exceptions.
+
 1.0.3
 
 Fix bugs preventing counter and set data types from working on models.
