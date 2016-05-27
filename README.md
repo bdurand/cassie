@@ -204,6 +204,14 @@ end
 
 You'll need something similar on other web servers. In any case, you'll want to make sure that you call Cassie.instance.connect in an initializer. It can take several seconds to establish the connection so you really want the connection to created before your server starts accepting traffic.
 
+### Instrumentation
+
+You can add instrumentation via subscribers to the `Cassie.instance`. Subscribers must respond to the `call` method and take a single argument which will be a Cassie::Message object which has the `statement`, `options`, and `elapsed_time`.
+
+```
+Cassie.instance.subscribers << lambda{|message| logger.warn("CQL: #{message.statement.cql} with #{message.options} took #{message.elapsed_time}s") if message.elapsed_time > 0.5 && message.statement.cql}
+```
+
 ### Limitations
 
 Ruby 2.0 (or compatible) required.

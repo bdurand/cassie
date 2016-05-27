@@ -120,6 +120,33 @@ describe Cassie do
     it "should prepare and execute a CQL statement when values are provided" do
       instance.execute("SELECT owner, id, val FROM #{table} WHERE owner = ?", [1]).size.should == 1
     end
+    
+    it "should call subscribers with details about the call" do
+      instance.subscribers.clear
+      begin
+        messages = []
+        instance.subscribers << lambda{|details| messages << details}
+
+        instance.execute("SELECT owner, id, val FROM #{table} WHERE owner = ?", [1])
+        messages.size.should == 1
+        message = messages.shift
+        message.statement.should be_a(Cassandra::Statement)
+        message.options.should == {:arguments => [1]}
+        message.elapsed_time.should be_a(Float)
+
+        instance.batch do
+          instance.insert(table, :owner => 1, :id => 2, :val => 'foo')
+          instance.delete(table, :owner => 1)
+        end
+        messages.size.should == 1
+        message = messages.shift
+        message.statement.should be_a(Cassandra::Statements::Batch)
+        message.options.should == nil
+        message.elapsed_time.should be_a(Float)
+      ensure
+        instance.subscribers.clear
+      end
+    end
   end
   
   describe "consistency" do

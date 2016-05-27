@@ -21,7 +21,20 @@ class Cassie
     end
   end
   
-  attr_reader :config
+  # Message passed to subscribers with the statement, options, and time for each statement
+  # to execute. Note that if statements are batched they will be packed into one message
+  # with a Cassandra::Statements::Batch statement and empty options.
+  class Message
+    attr_reader :statement, :options, :elapsed_time
+    
+    def initialize(statement, options, elapsed_time)
+      @statement = statement
+      @options = options
+      @elapsed_time = elapsed_time
+    end
+  end
+  
+  attr_reader :config, :subscribers
   
   class << self
     # A singleton instance that can be shared to communicate with a Cassandra cluster.
@@ -75,6 +88,7 @@ class Cassie
     @session = nil
     @prepared_statements = {}
     @last_prepare_warning = Time.now
+    @subscribers = []
   end
   
   # Open a connection to the Cassandra cluster.
@@ -272,15 +286,15 @@ class Cassie
       if default_consistency
         options = (options ? options.reverse_merge(:consistency => default_consistency) : {:consistency => default_consistency})
       end
-    
+      
       session.execute(statement, options || {})
     rescue Cassandra::Errors::IOError => e
       disconnect
       raise e
     ensure
-      elapsed = Time.now - start_time
-      if elapsed >= 0.5 && logger
-        logger.warn("Slow CQL Query (#{(elapsed * 1000).round}ms): #{cql}#{' with ' + values.inspect unless values.blank?}")
+      unless subscribers.empty?
+        payload = Message.new(statement, options, Time.now - start_time)
+        subscribers.each{|subscriber| subscriber.call(payload)}
       end
     end
   end
@@ -320,5 +334,18 @@ class Cassie
       values << value
     end
     [cql.join(' AND '), values]
+  end
+  
+  # Extract the CQL from a statement
+  def statement_cql(statement, previous = nil)
+    cql = nil
+    if statement.respond_to?(:cql)
+      cql = statement.cql
+    elsif statement.respond_to?(:statements) && (previous.nil? || !previous.include?(statement))
+      previous ||= []
+      previous << statement
+      cql = statement.statements.collect{|s| statement_cql(s, previous)}.join('; ')
+    end
+    cql
   end
 end

@@ -1,3 +1,9 @@
+1.0.5
+
+Add subscribers for instumenting code.
+
+Remove hardcoded log warnings for long running statements since this can now be better handled with instrumentation.
+
 1.0.4
 
 Set less cryptic error message for invalid records exceptions.
