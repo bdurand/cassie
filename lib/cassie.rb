@@ -270,8 +270,12 @@ class Cassie
     start_time = Time.now
     begin
       statement = nil
-      if cql.is_a?(String) && values.present?
-        statement = prepare(cql)
+      if cql.is_a?(String)
+        if values.present?
+          statement = prepare(cql)
+        else
+          statement = Cassandra::Statements::Simple.new(cql)
+        end
       else
         statement = cql
       end
@@ -292,7 +296,7 @@ class Cassie
       disconnect
       raise e
     ensure
-      unless subscribers.empty?
+      if statement.is_a?(Cassandra::Statement) && !subscribers.empty?
         payload = Message.new(statement, options, Time.now - start_time)
         subscribers.each{|subscriber| subscriber.call(payload)}
       end

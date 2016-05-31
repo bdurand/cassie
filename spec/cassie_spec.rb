@@ -134,6 +134,13 @@ describe Cassie do
         message.options.should == {:arguments => [1]}
         message.elapsed_time.should be_a(Float)
 
+        instance.execute("SELECT owner, id, val FROM #{table} WHERE owner = 1")
+        messages.size.should == 1
+        message = messages.shift
+        message.statement.should be_a(Cassandra::Statement)
+        message.options.should == nil
+        message.elapsed_time.should be_a(Float)
+
         instance.batch do
           instance.insert(table, :owner => 1, :id => 2, :val => 'foo')
           instance.delete(table, :owner => 1)
@@ -153,19 +160,19 @@ describe Cassie do
     let(:session){ instance.send(:session) }
     
     it "should not specify query consistency by default" do
-      expect(session).to receive(:execute).with("SELECT * FROM dual", {})
+      expect(session).to receive(:execute).with(Cassandra::Statements::Simple.new("SELECT * FROM dual"), {})
       instance.execute("SELECT * FROM dual")
     end
     
     it "should allow specifying the consistency in a block" do
-      expect(session).to receive(:execute).with("SELECT * FROM dual", {:consistency => :one})
+      expect(session).to receive(:execute).with(Cassandra::Statements::Simple.new("SELECT * FROM dual"), {:consistency => :one})
       Cassie.consistency(:one) do
         instance.execute("SELECT * FROM dual")
       end
     end
     
     it "should use the consistency specified to execute if provided" do
-      expect(session).to receive(:execute).with("SELECT * FROM dual", {:consistency => :two})
+      expect(session).to receive(:execute).with(Cassandra::Statements::Simple.new("SELECT * FROM dual"), {:consistency => :two})
       Cassie.consistency(:one) do
         instance.execute("SELECT * FROM dual", nil, :consistency => :two)
       end

@@ -1,3 +1,7 @@
+1.0.6
+
+Wrap raw CQL in a Simple statement for code consistency in subscribers.
+
 1.0.5
 
 Add subscribers for instumenting code.
