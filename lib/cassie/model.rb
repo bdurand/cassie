@@ -231,7 +231,9 @@ module Cassie::Model
     
       results = connection.find(cql, values, options)
       records = [] unless block_given?
+      row_count = 0
       loop do
+        row_count += results.size
         results.each do |row|
           record = new(row)
           record.instance_variable_set(:@persisted, true)
@@ -246,7 +248,7 @@ module Cassie::Model
       end
       
       unless find_subscribers.empty? && Cassie::Model.find_subscribers.empty?
-        payload = FindMessage.new(cql, values, options, Time.now - start_time, records.size)
+        payload = FindMessage.new(cql, values, options, Time.now - start_time, row_count)
         find_subscribers.each{|subscriber| subscriber.call(payload)} unless find_subscribers.empty?
         Cassie::Model.find_subscribers.each{|subscriber| subscriber.call(payload)} unless Cassie::Model.find_subscribers.empty?
       end

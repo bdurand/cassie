@@ -101,7 +101,15 @@ describe Cassie::Model do
       Cassie::Thing.find_all(where: :all).size.should == 3
     end
     
-    it "should be able to add subscribers"
+    it "should be able to add subscribers" do
+      global = nil
+      local = nil
+      Cassie::Model.find_subscribers << lambda{|info| global = info.rows}
+      Cassie::Thing.find_subscribers << lambda{|info| local = info.rows}
+      Cassie::Thing.find_all(where: {:owner => 1}).size.should == 2
+      global.should == 2
+      local.should == 2
+    end
   end
   
   describe "offset_to_id" do
