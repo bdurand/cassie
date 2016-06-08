@@ -47,10 +47,40 @@ module Cassie::Model
     class_attribute :_column_aliases, :instance_reader => false, :instance_writer => false
     class_attribute :_ordering_keys, :instance_reader => false, :instance_writer => false
     class_attribute :_counter_table, :instance_reader => false, :instance_writer => false
+    class_attribute :find_subscribers, :instance_reader => false, :instance_writer => false
     define_model_callbacks :create, :update, :save, :destroy
     self._columns = {}
     self._column_aliases = HashWithIndifferentAccess.new
     self._ordering_keys = {}
+    self.find_subscribers = []
+  end
+  
+  class << self
+    def find_subscribers
+      @find_subscribers ||= []
+    end
+    
+    def add_find_subscriber
+    end
+    
+    def remove_find_subscriber
+    end
+    
+    def remove_find_subscribers
+    end
+  end
+  
+  # Message sent to find subscribers for instrumenting find operations.
+  class FindMessage
+    attr_reader :cql, :args, :options, :elapsed_time, :rows
+    
+    def initialize(cql, args, options, elapsed_time, rows)
+      @cql = cql
+      @args = args
+      @options = options
+      @elapsed_time = elapsed_time
+      @rows = rows
+    end
   end
   
   module ClassMethods    
@@ -186,6 +216,7 @@ module Cassie::Model
     # You can provide a block to this method in which case it will yield each
     # record as it is foundto the block instead of returning them.
     def find_all(where:, select: nil, order: nil, limit: nil, options: nil)
+      start_time = Time.now
       columns = (select ? Array(select).collect{|c| column_name(c)} : column_names)
       cql = "SELECT #{columns.join(', ')} FROM #{full_table_name}"
       values = nil
@@ -222,6 +253,13 @@ module Cassie::Model
         break if results.last_page?
         results = results.next_page
       end
+      
+      unless find_subscribers.empty? && Cassie::Model.find_subscribers.empty?
+        payload = FindMessage.new(cql, values, options, Time.now - start_time, records.size)
+        find_subscribers.each{|subscriber| suscriber.call(payload)} unless find_subscribers.empty?
+        Cassie::Model.find_subscribers.each{|subscriber| suscriber.call(payload)} unless Cassie::Model.find_subscribers.empty?
+      end
+      
       records
     end
     

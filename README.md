@@ -212,6 +212,11 @@ You can add instrumentation via subscribers to the `Cassie.instance`. Subscriber
 Cassie.instance.subscribers << lambda{|message| logger.warn("CQL: #{message.statement.cql} with #{message.options} took #{message.elapsed_time}s") if message.elapsed_time > 0.5 && message.statement.cql}
 ```
 
+You can instrument the finding code on your model by adding a find subscriber either to the model or to Cassie::Model. These subscribers take a block which is yielded to with the CQL, arguments, options, elapsed time, and rows returned.
+```
+Cassie::Model.find_subscribers << lambda{|message| logger.warn("CQL: #{message.cql}; Rows: #{message.rows}; Time: #{message.elapsed_time}")
+```
+
 ### Limitations
 
 Ruby 2.0 (or compatible) required.

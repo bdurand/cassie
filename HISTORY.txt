@@ -1,3 +1,7 @@
+1.0.7
+
+Add find_subscribers to Cassie::Model.
+
 1.0.6
 
 Wrap raw CQL in a Simple statement for code consistency in subscribers.

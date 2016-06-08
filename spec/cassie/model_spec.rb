@@ -100,6 +100,8 @@ describe Cassie::Model do
       expect{ Cassie::Thing.find_all(where: {}) }.to raise_error(ArgumentError)
       Cassie::Thing.find_all(where: :all).size.should == 3
     end
+    
+    it "should be able to add subscribers"
   end
   
   describe "offset_to_id" do
