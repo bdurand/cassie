@@ -59,15 +59,6 @@ module Cassie::Model
     def find_subscribers
       @find_subscribers ||= []
     end
-    
-    def add_find_subscriber
-    end
-    
-    def remove_find_subscriber
-    end
-    
-    def remove_find_subscribers
-    end
   end
   
   # Message sent to find subscribers for instrumenting find operations.
@@ -256,8 +247,8 @@ module Cassie::Model
       
       unless find_subscribers.empty? && Cassie::Model.find_subscribers.empty?
         payload = FindMessage.new(cql, values, options, Time.now - start_time, records.size)
-        find_subscribers.each{|subscriber| suscriber.call(payload)} unless find_subscribers.empty?
-        Cassie::Model.find_subscribers.each{|subscriber| suscriber.call(payload)} unless Cassie::Model.find_subscribers.empty?
+        find_subscribers.each{|subscriber| subscriber.call(payload)} unless find_subscribers.empty?
+        Cassie::Model.find_subscribers.each{|subscriber| subscriber.call(payload)} unless Cassie::Model.find_subscribers.empty?
       end
       
       records
