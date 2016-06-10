@@ -1,6 +1,6 @@
 1.0.7
 
-Add find_subscribers to Cassie::Model.
+Add find_subscribers to Cassie::Model for instrumenting model find calls.
 
 1.0.6
 

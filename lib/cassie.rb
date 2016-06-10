@@ -4,6 +4,7 @@ require 'cassandra'
 # a foundation for maintaining a connection and constructing CQL statements.
 class Cassie
   require File.expand_path("../cassie/config.rb", __FILE__)
+  require File.expand_path("../cassie/subscribers.rb", __FILE__)
   require File.expand_path("../cassie/model.rb", __FILE__)
   require File.expand_path("../cassie/schema.rb", __FILE__)
   require File.expand_path("../cassie/testing.rb", __FILE__)
@@ -88,7 +89,7 @@ class Cassie
     @session = nil
     @prepared_statements = {}
     @last_prepare_warning = Time.now
-    @subscribers = []
+    @subscribers = Subscribers.new
   end
   
   # Open a connection to the Cassandra cluster.

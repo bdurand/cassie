@@ -52,12 +52,14 @@ module Cassie::Model
     self._columns = {}
     self._column_aliases = HashWithIndifferentAccess.new
     self._ordering_keys = {}
-    self.find_subscribers = []
+    self.find_subscribers = Cassie::Subscribers.new(Cassie::Model.find_subscribers)
   end
   
   class << self
+    @@find_subscribers = Cassie::Subscribers.new
+    
     def find_subscribers
-      @find_subscribers ||= []
+      @@find_subscribers
     end
   end
   
@@ -247,10 +249,9 @@ module Cassie::Model
         results = results.next_page
       end
       
-      unless find_subscribers.empty? && Cassie::Model.find_subscribers.empty?
+      if find_subscribers && !find_subscribers.empty?
         payload = FindMessage.new(cql, values, options, Time.now - start_time, row_count)
-        find_subscribers.each{|subscriber| subscriber.call(payload)} unless find_subscribers.empty?
-        Cassie::Model.find_subscribers.each{|subscriber| subscriber.call(payload)} unless Cassie::Model.find_subscribers.empty?
+        find_subscribers.each{|subscriber| subscriber.call(payload)}
       end
       
       records
