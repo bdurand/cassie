@@ -292,7 +292,7 @@ class Cassie
       statement_consistency = current_consistency
       if statement_consistency
         if options
-          options = options.merge(:consistency => consistency) if options[:consistency].nil?
+          options = options.merge(:consistency => statement_consistency) if options[:consistency].nil?
         else
           options = {:consistency => statement_consistency}
         end

@@ -173,6 +173,14 @@ describe Cassie do
       end
     end
     
+    it "should allow specifying the consistency in a block if statement consistency is explicitly nil" do
+      expect(session).to receive(:execute).with(Cassandra::Statements::Simple.new("SELECT * FROM dual"), {:consistency => :one})
+      Cassie.consistency(:one) do
+        instance.execute("SELECT * FROM dual", nil, :consistency => nil)
+        expect(instance.current_consistency).to eq :one
+      end
+    end
+    
     it "should use the consistency specified to execute if provided" do
       expect(session).to receive(:execute).with(Cassandra::Statements::Simple.new("SELECT * FROM dual"), {:consistency => :two})
       Cassie.consistency(:one) do

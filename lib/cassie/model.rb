@@ -513,8 +513,8 @@ module Cassie::Model
   
   # Save a record. Returns true if the record was saved and raises an ActiveRecord::RecordInvalid
   # error if the record is invalid.
-  def save!
-    if save
+  def save!(ttl: nil)
+    if save(ttl: ttl)
       true
     else
       raise Cassie::RecordInvalid.new(self)
