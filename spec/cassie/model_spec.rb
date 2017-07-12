@@ -183,6 +183,16 @@ describe Cassie::Model do
       record.callbacks.should == [:save, :update]
       Cassie::Thing.find(:owner => 1, :id => 2).value.should == 'bar'
     end
+    
+    it "should save new records with a ttl" do
+      expect(Cassie::Thing.connection).to receive(:insert).with("cassie_specs.things", {:owner=>1, :id=>2, :val=>'foo'}, {:consistency=>:quorum, :ttl=>10}).and_call_original
+      record = Cassie::Thing.new(:owner => 1, :id => 2, :val => 'foo')
+      record.persisted?.should == false
+      record.save(ttl: 10).should == true
+      record.persisted?.should == true
+      record.callbacks.should == [:save, :create]
+      Cassie::Thing.find(:owner => 1, :id => 2).should == record
+    end
   end
   
   describe "destroy" do
@@ -192,6 +202,54 @@ describe Cassie::Model do
       record.destroy
       Cassie::Thing.find(:owner => 1, :id => 2).should == nil
       record.callbacks.should =~ [:destroy]
+    end
+  end
+  
+  describe "consistency" do
+    let(:connection){ Cassie::Thing.connection }
+
+    it "should be able to set a model level read consistency" do
+      expect(connection).to receive(:find).with("SELECT owner, id, val FROM cassie_specs.things WHERE owner = ?", [0], {:consistency => :one}).and_call_original
+      Cassie::Thing.find_all(where: {:owner => 0})
+    end
+    
+    it "should be able to override the model level read consistency" do
+      save_val = Cassie::Thing.read_consistency
+      begin
+        Cassie::Thing.read_consistency = :quorum
+        expect(connection).to receive(:find).with("SELECT owner, id, val FROM cassie_specs.things WHERE owner = ?", [0], {:consistency => :quorum}).and_call_original
+        Cassie::Thing.find_all(where: {:owner => 0})
+      ensure
+        Cassie::Thing.read_consistency = save_val
+      end
+    end
+    
+    it "should be able to set a model level write consistency" do
+      thing = Cassie::Thing.new(:owner => 1, :id => 2)
+      expect(connection).to receive(:insert).with("cassie_specs.things", {:owner=>1, :id=>2, :val=>nil}, {:consistency=>:quorum, :ttl=>nil}).and_call_original
+      thing.save
+      
+      thing.val = "foo"
+      expect(connection).to receive(:update).with("cassie_specs.things", {:val=>"foo"}, {:owner=>1, :id=>2}, {:consistency=>:quorum, :ttl=>nil}).and_call_original
+      thing.save
+      
+      expect(connection).to receive(:delete).with("cassie_specs.things", {:owner=>1, :id=>2}, {:consistency=>:quorum}).and_call_original
+      thing.destroy
+    end
+    
+    it "should be able to override the model level write consistency" do
+      thing = Cassie::Thing.new(:owner => 1, :id => 2)
+      thing.write_consistency = :local_quorum
+      
+      expect(connection).to receive(:insert).with("cassie_specs.things", {:owner=>1, :id=>2, :val=>nil}, {:consistency=>:local_quorum, :ttl=>nil}).and_call_original
+      thing.save
+      
+      thing.val = "foo"
+      expect(connection).to receive(:update).with("cassie_specs.things", {:val=>"foo"}, {:owner=>1, :id=>2}, {:consistency=>:local_quorum, :ttl=>nil}).and_call_original
+      thing.save
+      
+      expect(connection).to receive(:delete).with("cassie_specs.things", {:owner=>1, :id=>2}, {:consistency=>:local_quorum}).and_call_original
+      thing.destroy
     end
   end
   
@@ -511,54 +569,6 @@ describe Cassie::Model do
       model.counter_value.should == 1
       model = Cassie::TypeTesterCounter.find(:id => id)
       model.counter_value.should == 1
-    end
-  end
-  
-  describe "consistency" do
-    let(:connection){ Cassie::Thing.connection }
-
-    it "should be able to set a model level read consistency" do
-      expect(connection).to receive(:find).with("SELECT owner, id, val FROM cassie_specs.things WHERE owner = ?", [0], {:consistency => :one}).and_call_original
-      Cassie::Thing.find_all(where: {:owner => 0})
-    end
-    
-    it "should be able to override the model level read consistency" do
-      save_val = Cassie::Thing.read_consistency
-      begin
-        Cassie::Thing.read_consistency = :quorum
-        expect(connection).to receive(:find).with("SELECT owner, id, val FROM cassie_specs.things WHERE owner = ?", [0], {:consistency => :quorum}).and_call_original
-        Cassie::Thing.find_all(where: {:owner => 0})
-      ensure
-        Cassie::Thing.read_consistency = save_val
-      end
-    end
-    
-    it "should be able to set a model level write consistency" do
-      thing = Cassie::Thing.new(:owner => 1, :id => 2)
-      expect(connection).to receive(:insert).with("cassie_specs.things", {:owner=>1, :id=>2, :val=>nil}, {:consistency=>:quorum, :ttl=>nil}).and_call_original
-      thing.save
-      
-      thing.val = "foo"
-      expect(connection).to receive(:update).with("cassie_specs.things", {:val=>"foo"}, {:owner=>1, :id=>2}, {:consistency=>:quorum, :ttl=>nil}).and_call_original
-      thing.save
-      
-      expect(connection).to receive(:delete).with("cassie_specs.things", {:owner=>1, :id=>2}, {:consistency=>:quorum}).and_call_original
-      thing.destroy
-    end
-    
-    it "should be able to override the model level write consistency" do
-      thing = Cassie::Thing.new(:owner => 1, :id => 2)
-      thing.write_consistency = :local_quorum
-      
-      expect(connection).to receive(:insert).with("cassie_specs.things", {:owner=>1, :id=>2, :val=>nil}, {:consistency=>:local_quorum, :ttl=>nil}).and_call_original
-      thing.save
-      
-      thing.val = "foo"
-      expect(connection).to receive(:update).with("cassie_specs.things", {:val=>"foo"}, {:owner=>1, :id=>2}, {:consistency=>:local_quorum, :ttl=>nil}).and_call_original
-      thing.save
-      
-      expect(connection).to receive(:delete).with("cassie_specs.things", {:owner=>1, :id=>2}, {:consistency=>:local_quorum}).and_call_original
-      thing.destroy
     end
   end
 end

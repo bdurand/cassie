@@ -217,10 +217,13 @@ class Cassie
     end
     cql = "INSERT INTO #{table} (#{columns.join(', ')}) VALUES (#{question_marks(columns.size)})"
     
-    ttl = options[:ttl] if options
-    if ttl
-      cql << " USING TTL ?"
-      values << Integer(ttl)
+    if options && options.include?(:ttl)
+      options = options.dup
+      ttl = options.delete(:ttl)
+      if ttl
+        cql << " USING TTL ?"
+        values << Integer(ttl)
+      end
     end
     
     batch_or_execute(cql, values, options)
@@ -247,11 +250,16 @@ class Cassie
     values = update_values + key_values
     
     cql = "UPDATE #{table}"
-    ttl = options[:ttl] if options
-    if ttl
-      cql << " USING TTL ?"
-      values.unshift(Integer(ttl))
+    
+    if options && options.include?(:ttl)
+      options = options.dup
+      ttl = options.delete(:ttl)
+      if ttl
+        cql << " USING TTL ?"
+        values.unshift(Integer(ttl))
+      end
     end
+
     cql << " SET #{update_cql.join(', ')} WHERE #{key_cql}"
     
     batch_or_execute(cql, values, options)
