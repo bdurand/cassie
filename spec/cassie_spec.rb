@@ -131,14 +131,14 @@ describe Cassie do
         messages.size.should == 1
         message = messages.shift
         message.statement.should be_a(Cassandra::Statement)
-        message.options.should == {:arguments => [1]}
+        message.options.should == {:arguments => [1], :consistency => :local_one}
         message.elapsed_time.should be_a(Float)
 
         instance.execute("SELECT owner, id, val FROM #{table} WHERE owner = 1")
         messages.size.should == 1
         message = messages.shift
         message.statement.should be_a(Cassandra::Statement)
-        message.options.should == nil
+        message.options.should == {:consistency => :local_one}
         message.elapsed_time.should be_a(Float)
 
         instance.batch do
@@ -148,7 +148,7 @@ describe Cassie do
         messages.size.should == 1
         message = messages.shift
         message.statement.should be_a(Cassandra::Statements::Batch)
-        message.options.should == nil
+        message.options.should == {:consistency => :local_one}
         message.elapsed_time.should be_a(Float)
       ensure
         instance.subscribers.clear
@@ -160,14 +160,16 @@ describe Cassie do
     let(:session){ instance.send(:session) }
     
     it "should not specify query consistency by default" do
-      expect(session).to receive(:execute).with(Cassandra::Statements::Simple.new("SELECT * FROM dual"), {})
+      expect(session).to receive(:execute).with(Cassandra::Statements::Simple.new("SELECT * FROM dual"), {:consistency => :local_one})
       instance.execute("SELECT * FROM dual")
+      expect(instance.current_consistency).to eq :local_one
     end
     
     it "should allow specifying the consistency in a block" do
       expect(session).to receive(:execute).with(Cassandra::Statements::Simple.new("SELECT * FROM dual"), {:consistency => :one})
       Cassie.consistency(:one) do
         instance.execute("SELECT * FROM dual")
+        expect(instance.current_consistency).to eq :one
       end
     end
     
@@ -175,6 +177,35 @@ describe Cassie do
       expect(session).to receive(:execute).with(Cassandra::Statements::Simple.new("SELECT * FROM dual"), {:consistency => :two})
       Cassie.consistency(:one) do
         instance.execute("SELECT * FROM dual", nil, :consistency => :two)
+        expect(instance.current_consistency).to eq :one
+      end
+    end
+    
+    it "should use the consistency passed in the batch for all statements in the batch" do
+      expect(session).to receive(:execute).with(an_instance_of(Cassandra::Statements::Batch::Logged), {:consistency => :two})
+      Cassie.instance.batch(:consistency => :two) do
+        instance.insert(table, :owner => 1, :id => 2, :val => 'foo')
+      end
+    end
+    
+    it "should be able to specify a global consistancy" do
+      expect(session).to receive(:execute).with(Cassandra::Statements::Simple.new("SELECT * FROM dual"), {:consistency => :one})
+      expect(session).to receive(:execute).with(Cassandra::Statements::Simple.new("SELECT COUNT(*) FROM dual"), {:consistency => :local_quorum})
+      expect(session).to receive(:execute).with(Cassandra::Statements::Simple.new("SELECT COUNT(1) FROM dual"), {:consistency => :local_one})
+      instance.execute("SELECT COUNT(1) FROM dual", nil)
+      expect(instance.current_consistency).to eq :local_one
+      
+      begin
+        instance.consistency = :local_quorum
+        expect(instance.current_consistency).to eq :local_quorum
+        instance.execute("SELECT COUNT(*) FROM dual", nil)
+        Cassie.consistency(:one) do
+          instance.execute("SELECT * FROM dual", nil)
+          expect(instance.current_consistency).to eq :one
+        end
+        expect(instance.current_consistency).to eq :local_quorum
+      ensure
+        instance.consistency = :local_one
       end
     end
   end

@@ -4,6 +4,8 @@ class Cassie::Thing
   self.table_name = "things"
   self.keyspace = "test"
   self.primary_key = [:owner, :id]
+  self.read_consistency = :one
+  self.write_consistency = :quorum
   
   column :owner, :int
   column :id, :int, :as => :identifier

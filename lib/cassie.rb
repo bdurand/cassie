@@ -36,6 +36,7 @@ class Cassie
   end
   
   attr_reader :config, :subscribers
+  attr_accessor :consistency
   
   class << self
     # A singleton instance that can be shared to communicate with a Cassandra cluster.
@@ -90,6 +91,7 @@ class Cassie
     @prepared_statements = {}
     @last_prepare_warning = Time.now
     @subscribers = Subscribers.new
+    @consistency = ((config.cluster || {})[:consistency] || :local_one)
   end
   
   # Open a connection to the Cassandra cluster.
@@ -180,7 +182,7 @@ class Cassie
               batch_statement.add(statement)
             end
           end
-          execute(batch_statement)
+          execute(batch_statement, nil, options)
         end
       ensure
         Thread.current[:cassie_batch] = nil
@@ -287,9 +289,13 @@ class Cassie
       end
     
       # Set a default consistency from a block context if it isn't explicitly set.
-      default_consistency = Thread.current[:cassie_consistency]
-      if default_consistency
-        options = (options ? options.reverse_merge(:consistency => default_consistency) : {:consistency => default_consistency})
+      statement_consistency = current_consistency
+      if statement_consistency
+        if options
+          options = options.merge(:consistency => consistency) if options[:consistency].nil?
+        else
+          options = {:consistency => statement_consistency}
+        end
       end
       
       session.execute(statement, options || {})
@@ -302,6 +308,11 @@ class Cassie
         subscribers.each{|subscriber| subscriber.call(payload)}
       end
     end
+  end
+  
+  # Return the current consistency level that has been set for statements.
+  def current_consistency
+    Thread.current[:cassie_consistency] || consistency
   end
 
   private

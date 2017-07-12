@@ -48,6 +48,8 @@ module Cassie::Model
     class_attribute :_ordering_keys, :instance_reader => false, :instance_writer => false
     class_attribute :_counter_table, :instance_reader => false, :instance_writer => false
     class_attribute :find_subscribers, :instance_reader => false, :instance_writer => false
+    class_attribute :read_consistency, :instance_reader => false, :instance_writer => false
+    class_attribute :write_consistency
     define_model_callbacks :create, :update, :save, :destroy
     self._columns = {}
     self._column_aliases = HashWithIndifferentAccess.new
@@ -98,8 +100,11 @@ module Cassie::Model
     def column(name, type, as: nil)
       name = name.to_sym
       type_class = nil
+      type_name = type.to_s.downcase.classify
+      # Backward compatibility with older driver versions.
+      type_name = "Text" if type_name == "Varchar"
       begin
-        type_class = "Cassandra::Types::#{type.to_s.downcase.classify}".constantize
+        type_class = "Cassandra::Types::#{type_name}".constantize
       rescue NameError
         raise ArgumentError.new("#{type.inspect} is not an allowed Cassandra type")
       end
@@ -231,7 +236,7 @@ module Cassie::Model
         values << Integer(limit)
       end
     
-      results = connection.find(cql, values, options)
+      results = connection.find(cql, values, consistency_options(read_consistency, options))
       records = [] unless block_given?
       row_count = 0
       loop do
@@ -294,7 +299,7 @@ module Cassie::Model
         where = connection.prepare(cql)
       end
       
-      results = connection.find(cql, values, options)
+      results = connection.find(cql, values, consistency_options(read_consistency, options))
       results.rows.first["count"]
     end
     
@@ -321,13 +326,15 @@ module Cassie::Model
       key_hash.each do |name, value|
         cleanup_up_hash[column_name(name)] = value
       end
-      connection.delete(full_table_name, cleanup_up_hash)
+      connection.delete(full_table_name, cleanup_up_hash, :consistency => write_consistency)
     end
     
     # All insert, update, and delete calls within the block will be sent as a single
-    # batch to Cassandra.
-    def batch
-      connection.batch do
+    # batch to Cassandra. The consistency level will default to the write consistency
+    # level if it's been set.
+    def batch(options = nil)
+      options = consistency_options(write_consistency, options)
+      connection.batch(options) do
         yield
       end
     end
@@ -448,6 +455,19 @@ module Cassie::Model
         type_class.new(value)
       end
     end
+    
+    def consistency_options(consistency, options)
+      if consistency
+        if options
+          options = options.merge(:consistency => consistency) if options[:consistency].nil?
+          options
+        else
+          {:consistency => consistency}
+        end
+      else
+        options
+      end
+    end
   end
   
   def initialize(attributes = {})
@@ -473,13 +493,14 @@ module Cassie::Model
     valid_record = (validate ? valid? : true)
     if valid_record
       run_callbacks(:save) do
+        options = {:consistency => write_consistency, :ttl => (ttl || persistence_ttl)}
         if persisted?
           run_callbacks(:update) do
-            self.class.connection.update(self.class.full_table_name, values_hash, key_hash, :ttl => (ttl || persistence_ttl))
+            self.class.connection.update(self.class.full_table_name, values_hash, key_hash, options)
           end
         else
           run_callbacks(:create) do
-            self.class.connection.insert(self.class.full_table_name, attributes, :ttl => (ttl || persistence_ttl))
+            self.class.connection.insert(self.class.full_table_name, attributes, options)
             @persisted = true
           end
         end
@@ -503,7 +524,7 @@ module Cassie::Model
   # Delete a record and call the destroy callbacks.
   def destroy
     run_callbacks(:destroy) do
-      self.class.connection.delete(self.class.full_table_name, key_hash)
+      self.class.connection.delete(self.class.full_table_name, key_hash, :consistency => write_consistency)
       @persisted = false
       true
     end
@@ -548,7 +569,8 @@ module Cassie::Model
     if amount != 0
       run_callbacks(:update) do
         adjustment = (amount < 0 ? "#{name} = #{name} - #{amount.abs}" : "#{name} = #{name} + #{amount}")
-        self.class.connection.update(self.class.full_table_name, adjustment, key_hash, :ttl => (ttl || persistence_ttl))
+        options = {:consistency => write_consistency, :ttl => (ttl || persistence_ttl)}
+        self.class.connection.update(self.class.full_table_name, adjustment, key_hash, options)
       end
     end
     record = self.class.find(key_hash)
