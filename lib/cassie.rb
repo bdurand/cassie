@@ -220,7 +220,7 @@ class Cassie
     ttl = options[:ttl] if options
     if ttl
       cql << " USING TTL ?"
-      values << ttl
+      values << Integer(ttl)
     end
     
     batch_or_execute(cql, values, options)
@@ -250,7 +250,7 @@ class Cassie
     ttl = options[:ttl] if options
     if ttl
       cql << " USING TTL ?"
-      values.unshift(ttl)
+      values.unshift(Integer(ttl))
     end
     cql << " SET #{update_cql.join(', ')} WHERE #{key_cql}"
     
