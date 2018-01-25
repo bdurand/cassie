@@ -1,3 +1,6 @@
+## 1.1.1
+* Update dependencies to support Rails 5.
+
 ## 1.1.0
 
 * Bump supported version of cassandra-driver to 3.x.

@@ -3,7 +3,7 @@ module Cassie::Testing
   extend ActiveSupport::Concern
   
   included do
-    alias_method_chain :insert, :testing
+    prepend OverrideMethods
   end
   
   class << self
@@ -38,9 +38,11 @@ module Cassie::Testing
     end
   end
   
-  def insert_with_testing(table, *args)
-    Thread.current[:cassie_inserted] ||= Set.new
-    Thread.current[:cassie_inserted] << table
-    insert_without_testing(table, *args)
+  module OverrideMethods
+    def insert(table, *args)
+      Thread.current[:cassie_inserted] ||= Set.new
+      Thread.current[:cassie_inserted] << table
+      super(table, *args)
+    end
   end
 end

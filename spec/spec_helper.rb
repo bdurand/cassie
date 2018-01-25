@@ -1,3 +1,12 @@
+require 'rubygems'
+
+active_model_version = ENV["ACTIVE_MODEL_VERSION"] || [">= 4.0"]
+active_model_version = [active_model_version] unless active_model_version.is_a?(Array)
+gem 'activemodel', *active_model_version
+
+require 'active_model'
+puts "Testing Against ActiveModel #{ActiveModel::VERSION::STRING}" if defined?(ActiveModel::VERSION)
+
 require 'whi-cassie'
 require File.expand_path('../models/thing', __FILE__)
 require File.expand_path('../models/type_tester', __FILE__)
