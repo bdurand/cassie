@@ -1,3 +1,5 @@
+[![Maintainability](https://api.codeclimate.com/v1/badges/129ede20094ea298c687/maintainability)](https://codeclimate.com/github/weheartit/cassie/maintainability)
+
 # Cassie
 
 The short and sweet Cassandra object mapper from [We Heart It](http://weheartit.com/)
@@ -8,34 +10,34 @@ The short and sweet Cassandra object mapper from [We Heart It](http://weheartit.
 class Thing
   # Your model must include this
   include Cassie::Model
-  
+
   # Set the table name where the data lives.
   self.table_name = "things"
-  
+
   # Set the keyspace where the table lives. Keyspaces can be defined abstractly and mapped
   # and mapped in a configuration file. This can allow you to have different keyspace names
   # between different environments and still use the same code.
   self.keyspace = "default"
-  
+
   # You must defind the primary key. They columns must be listed in the order that they apper
   # in the Cassandra CQL PRIMARY KEY clause defining the table.
   self.primary_key = [:owner, :id]
-  
+
   # All columns are explicitly defined with their name and data type and an optional
   # alias name.
   column :owner, :int
   column :id, :int, :as => :identifier
   column :val, :varchar, :as => :value
-  
+
   # The ordering keys should also be defined along with how they are ordered.
   ordering_key :id, :desc
-  
+
   # You can use all the standard ActiveModel validations.
   validates_presence_of :owner, :id
-  
+
   # You also get before and after callbacks for create, update, save, and destroy.
   before_save :some_callback_method
-  
+
   ...
 end
 
@@ -176,13 +178,13 @@ To use it with rspec you should add this code to your spec_helper.rb file:
     end
     Cassie::Testing.prepare!
   end
-  
+
   config.after(:suite) do
     Cassie::Schema.all do |keyspace|
       Cassie::Schema.drop!(keyspace)
     end
   end
-  
+
   config.around(:each) do |example|
     Cassie::Testing.cleanup! do
       example.run
