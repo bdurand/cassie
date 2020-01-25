@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'cassandra'
 
 # This class provides a lightweight wrapper around the Cassandra driver. It provides

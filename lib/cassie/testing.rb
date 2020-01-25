@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # This class provides helper methods for testing.
 module Cassie::Testing
   extend ActiveSupport::Concern

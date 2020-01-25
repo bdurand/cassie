@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # Initialize Cassie instance with default behaviors for a Rails environment.
 #
 # Configuration will be gotten from config/cassie.yml.

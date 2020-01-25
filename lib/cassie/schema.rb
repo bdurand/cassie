@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # This class can be used to create, drop, or get information about the cassandra schemas. This class
 # is intended only to provide support for creating schemas in development and test environments. You
 # should not use this class with your production environment since some of the methods can be destructive.

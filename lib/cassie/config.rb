@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # Simple configuration for connecting to Cassandra.
 #
 # :cluster should be a Hash of the options to initialize the Cassandra cluster.

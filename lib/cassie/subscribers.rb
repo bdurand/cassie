@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # Thread safe list of subscribers. Each subscriber must respond to the :call method.
 class Cassie::Subscribers
   

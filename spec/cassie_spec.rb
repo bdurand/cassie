@@ -9,7 +9,7 @@ describe Cassie do
     it "should keep a cache of prepared statements" do
       statement_1 = instance.prepare("SELECT * FROM #{table} LIMIT ?")
       statement_2 = instance.prepare("SELECT * FROM #{table} LIMIT ?")
-      statement_1.object_id.should == statement_2.object_id
+      expect(statement_1.object_id).to eq(statement_2.object_id)
     end
     
     it "should clear the prepared statement cache when reconnecting" do
@@ -17,7 +17,7 @@ describe Cassie do
       instance.disconnect
       instance.connect
       statement_2 = instance.prepare("SELECT * FROM #{table} LIMIT ?")
-      statement_1.object_id.should_not == statement_2.object_id
+      expect(statement_1.object_id).not_to eq(statement_2.object_id)
     end
   end
   
@@ -29,18 +29,18 @@ describe Cassie do
     
     it "should construct a CQL query from the options" do
       results = instance.find("SELECT owner, id, val FROM #{table} WHERE owner = 1")
-      results.rows.collect{|r| r["val"]}.should == ['foo']
+      expect(results.rows.collect{|r| r["val"]}).to eq(['foo'])
     end
     
     it "should construct a CQL query from a statement with variables" do
       results = instance.find("SELECT owner, id, val FROM #{table} WHERE owner = ? LIMIT ?", [10, 1])
-      results.rows.collect{|r| r["val"]}.should == ['bar']
+      expect(results.rows.collect{|r| r["val"]}).to eq(['bar'])
     end
     
     it "should not batch find statements" do
       instance.batch do
         results = instance.find("SELECT  owner, id, val FROM #{table} WHERE owner = ? LIMIT ?", [10, 1])
-        results.rows.collect{|r| r["val"]}.should == ['bar']
+        expect(results.rows.collect{|r| r["val"]}).to eq(['bar'])
       end
     end
   end
@@ -48,20 +48,20 @@ describe Cassie do
   describe "insert" do
     it "should insert a row from a hash of values" do
       results = instance.find("SELECT owner, id, val FROM #{table} WHERE owner = ?", 1)
-      results.size.should == 0
+      expect(results.size).to eq(0)
       instance.insert(table, :owner => 1, :id => 2, :val => 'foo')
       results = instance.find("SELECT owner, id, val FROM #{table} WHERE owner = ?", 1)
-      results.rows.collect{|r| r['val']}.should == ['foo']
+      expect(results.rows.collect{|r| r['val']}).to eq(['foo'])
     end
     
     it "should add statements to the current batch" do
       instance.batch do
         instance.insert(table, :owner => 1, :id => 2, :val => 'foo')
         results = instance.find("SELECT owner, id, val FROM #{table} WHERE owner = ?", 1)
-        results.size.should == 0
+        expect(results.size).to eq(0)
       end
       results = instance.find("SELECT owner, id, val FROM #{table} WHERE owner = ?", 1)
-      results.size.should == 1
+      expect(results.size).to eq(1)
     end
   end
   
@@ -70,7 +70,7 @@ describe Cassie do
       instance.insert(table, :owner => 1, :id => 2, :val => 'foo')
       instance.update(table, {:val => 'bar'}, :owner => 1, :id => 2)
       results = instance.find("SELECT owner, id, val FROM #{table} WHERE owner = ?", 1)
-      results.rows.collect{|r| r["val"]}.should == ['bar']
+      expect(results.rows.collect{|r| r["val"]}).to eq(['bar'])
     end
 
     it "should add statements to the current batch" do
@@ -78,28 +78,28 @@ describe Cassie do
       instance.batch do
         instance.update(table, {:val => 'bar'}, :owner => 1, :id => 2)
         results = instance.find("SELECT owner, id, val FROM #{table} WHERE owner = ?", 1)
-        results.rows.collect{|r| r['val']}.should == ['foo']
+        expect(results.rows.collect{|r| r['val']}).to eq(['foo'])
       end
       results = instance.find("SELECT owner, id, val FROM #{table} WHERE owner = ?", 1)
-      results.rows.collect{|r| r['val']}.should == ['bar']
+      expect(results.rows.collect{|r| r['val']}).to eq(['bar'])
     end
   end
   
   describe "delete" do
     it "should update a row from a primary key hash" do
       instance.insert(table, :owner => 1, :id => 2, :val => 'foo')
-      instance.find("SELECT owner, id, val FROM #{table} WHERE owner = ?", 1).size.should == 1
+      expect(instance.find("SELECT owner, id, val FROM #{table} WHERE owner = ?", 1).size).to eq(1)
       instance.delete(table, :owner => 1)
-      instance.find("SELECT owner, id, val FROM #{table} WHERE owner = ?", 1).size.should == 0
+      expect(instance.find("SELECT owner, id, val FROM #{table} WHERE owner = ?", 1).size).to eq(0)
     end
 
     it "should add statements to the current batch" do
       instance.insert(table, :owner => 1, :id => 2, :val => 'foo')
       instance.batch do
         instance.delete(table, :owner => 1)
-        instance.find("SELECT owner, id, val FROM #{table} WHERE owner = ?", 1).size.should == 1
+        expect(instance.find("SELECT owner, id, val FROM #{table} WHERE owner = ?", 1).size).to eq(1)
       end
-      instance.find("SELECT owner, id, val FROM #{table} WHERE owner = ?", 1).size.should == 0
+      expect(instance.find("SELECT owner, id, val FROM #{table} WHERE owner = ?", 1).size).to eq(0)
     end
   end
   
@@ -109,16 +109,16 @@ describe Cassie do
     end
     
     it "should execute a plain CQL statement" do
-      instance.execute("SELECT owner, id, val FROM #{table} WHERE owner = 1").size.should == 1
+      expect(instance.execute("SELECT owner, id, val FROM #{table} WHERE owner = 1").size).to eq(1)
     end
     
     it "should execute a prepared statement" do
       statement = instance.prepare("SELECT owner, id, val FROM #{table} WHERE owner = 1")
-      instance.execute(statement).size.should == 1
+      expect(instance.execute(statement).size).to eq(1)
     end
     
     it "should prepare and execute a CQL statement when values are provided" do
-      instance.execute("SELECT owner, id, val FROM #{table} WHERE owner = ?", [1]).size.should == 1
+      expect(instance.execute("SELECT owner, id, val FROM #{table} WHERE owner = ?", [1]).size).to eq(1)
     end
     
     it "should call subscribers with details about the call" do
@@ -128,28 +128,28 @@ describe Cassie do
         instance.subscribers << lambda{|details| messages << details}
 
         instance.execute("SELECT owner, id, val FROM #{table} WHERE owner = ?", [1])
-        messages.size.should == 1
+        expect(messages.size).to eq(1)
         message = messages.shift
-        message.statement.should be_a(Cassandra::Statement)
-        message.options.should == {:arguments => [1], :consistency => :local_one}
-        message.elapsed_time.should be_a(Float)
+        expect(message.statement).to be_a(Cassandra::Statement)
+        expect(message.options).to eq({:arguments => [1], :consistency => :local_one})
+        expect(message.elapsed_time).to be_a(Float)
 
         instance.execute("SELECT owner, id, val FROM #{table} WHERE owner = 1")
-        messages.size.should == 1
+        expect(messages.size).to eq(1)
         message = messages.shift
-        message.statement.should be_a(Cassandra::Statement)
-        message.options.should == {:consistency => :local_one}
-        message.elapsed_time.should be_a(Float)
+        expect(message.statement).to be_a(Cassandra::Statement)
+        expect(message.options).to eq({:consistency => :local_one})
+        expect(message.elapsed_time).to be_a(Float)
 
         instance.batch do
           instance.insert(table, :owner => 1, :id => 2, :val => 'foo')
           instance.delete(table, :owner => 1)
         end
-        messages.size.should == 1
+        expect(messages.size).to eq(1)
         message = messages.shift
-        message.statement.should be_a(Cassandra::Statements::Batch)
-        message.options.should == {:consistency => :local_one}
-        message.elapsed_time.should be_a(Float)
+        expect(message.statement).to be_a(Cassandra::Statements::Batch)
+        expect(message.options).to eq({:consistency => :local_one})
+        expect(message.elapsed_time).to be_a(Float)
       ensure
         instance.subscribers.clear
       end
