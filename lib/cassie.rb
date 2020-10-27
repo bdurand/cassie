@@ -11,35 +11,35 @@ class Cassie
   require File.expand_path("../cassie/schema.rb", __FILE__)
   require File.expand_path("../cassie/testing.rb", __FILE__)
   require File.expand_path("../cassie/railtie.rb", __FILE__) if defined?(Rails)
-  
+
   class RecordNotFound < StandardError
   end
-  
+
   class RecordInvalid < StandardError
     attr_reader :record
-    
+
     def initialize(record)
       super("Errors on #{record.class.name}: #{record.errors.to_hash.inspect}")
       @record = record
     end
   end
-  
+
   # Message passed to subscribers with the statement, options, and time for each statement
   # to execute. Note that if statements are batched they will be packed into one message
   # with a Cassandra::Statements::Batch statement and empty options.
   class Message
     attr_reader :statement, :options, :elapsed_time
-    
+
     def initialize(statement, options, elapsed_time)
       @statement = statement
       @options = options
       @elapsed_time = elapsed_time
     end
   end
-  
+
   attr_reader :config, :subscribers
   attr_accessor :consistency
-  
+
   class << self
     # A singleton instance that can be shared to communicate with a Cassandra cluster.
     def instance
@@ -49,7 +49,7 @@ class Cassie
       end
       @instance
     end
-    
+
     # Call this method to load the Cassie::Config from the specified file for the
     # specified environment.
     def configure!(options)
@@ -60,7 +60,7 @@ class Cassie
       end
       @config = Cassie::Config.new(options)
     end
-    
+
     # This method can be used to set a consistency level for all Cassandra queries
     # within a block that don't explicitly define them. It can be used where consistency
     # is important (i.e. on validation queries) but where a higher level method
@@ -74,18 +74,18 @@ class Cassie
         Thread.current[:cassie_consistency] = save_val
       end
     end
-    
+
     # Get a Logger compatible object if it has been set.
     def logger
       @logger if defined?(@logger)
     end
-    
+
     # Set a logger with a Logger compatible object.
     def logger=(value)
       @logger = value
     end
   end
-  
+
   def initialize(config)
     @config = config
     @monitor = Monitor.new
@@ -95,7 +95,7 @@ class Cassie
     @subscribers = Subscribers.new
     @consistency = ((config.cluster || {})[:consistency] || :local_one)
   end
-  
+
   # Open a connection to the Cassandra cluster.
   def connect
     start_time = Time.now
@@ -118,12 +118,12 @@ class Cassie
       @prepared_statements = {}
     end
   end
-  
+
   # Return true if the connection to the Cassandra cluster has been established.
   def connected?
     !!@session
   end
-  
+
   # Force reconnection. If you're using this code in conjunction in a forking server environment
   # like passenger or unicorn you should call this method after forking.
   def reconnect
@@ -152,13 +152,13 @@ class Cassie
         end
       end
     end
-    
+
     if cache_filled_up && logger && Time.now > @last_prepare_warning + 10
       # Set a throttle on how often this message is logged so we don't kill performance enven more.
       @last_prepare_warning = Time.now
       logger.warn("Cassie.prepare cache filled up. Consider increasing the size from #{config.max_prepared_statements}.")
     end
-    
+
     statement
   end
 
@@ -218,16 +218,16 @@ class Cassie
       end
     end
     cql = "INSERT INTO #{table} (#{columns.join(', ')}) VALUES (#{question_marks(columns.size)})"
-    
+
     if options && options.include?(:ttl)
       options = options.dup
       ttl = options.delete(:ttl)
       if ttl
-        cql << " USING TTL ?"
+        cql = "#{cql} USING TTL ?"
         values << Integer(ttl)
       end
     end
-    
+
     batch_or_execute(cql, values, options)
   end
 
@@ -250,20 +250,20 @@ class Cassie
       end
     end
     values = update_values + key_values
-    
+
     cql = "UPDATE #{table}"
-    
+
     if options && options.include?(:ttl)
       options = options.dup
       ttl = options.delete(:ttl)
       if ttl
-        cql << " USING TTL ?"
+        cql = "#{cql} USING TTL ?"
         values.unshift(Integer(ttl))
       end
     end
 
-    cql << " SET #{update_cql.join(', ')} WHERE #{key_cql}"
-    
+    cql = "#{cql} SET #{update_cql.join(', ')} WHERE #{key_cql}"
+
     batch_or_execute(cql, values, options)
   end
 
@@ -292,12 +292,12 @@ class Cassie
       else
         statement = cql
       end
-    
+
       if values.present?
         values = Array(values)
         options = (options ? options.merge(:arguments => values) : {:arguments => values})
       end
-    
+
       # Set a default consistency from a block context if it isn't explicitly set.
       statement_consistency = current_consistency
       if statement_consistency
@@ -307,7 +307,7 @@ class Cassie
           options = {:consistency => statement_consistency}
         end
       end
-      
+
       session.execute(statement, options || {})
     rescue Cassandra::Errors::IOError => e
       disconnect
@@ -319,14 +319,14 @@ class Cassie
       end
     end
   end
-  
+
   # Return the current consistency level that has been set for statements.
   def current_consistency
     Thread.current[:cassie_consistency] || consistency
   end
 
   private
-  
+
   def logger
     self.class.logger
   end
@@ -335,7 +335,7 @@ class Cassie
     connect unless connected?
     @session
   end
-  
+
   def batch_or_execute(cql, values, options = nil)
     batch = Thread.current[:cassie_batch]
     if batch
@@ -347,9 +347,7 @@ class Cassie
   end
 
   def question_marks(size)
-    q = '?'
-    (size - 1).times{ q << ',?' }
-    q
+    "?#{',?' * (size - 1)}"
   end
 
   def key_clause(key_hash)
@@ -361,7 +359,7 @@ class Cassie
     end
     [cql.join(' AND '), values]
   end
-  
+
   # Extract the CQL from a statement
   def statement_cql(statement, previous = nil)
     cql = nil

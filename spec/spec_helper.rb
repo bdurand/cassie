@@ -19,11 +19,13 @@ RSpec.configure do |config|
 
   config.expect_with(:rspec) { |c| c.syntax = [:should, :expect] }
 
+  cassandra_host, cassandra_port = ENV.fetch("CASSANDRA_HOST", "localhost").split(":", 2)
+  cassandra_port ||= 9042
   config.before(:suite) do
     schema_dir = File.expand_path("../schema", __FILE__)
     protocol_version = (ENV["protocol_version"] ? ENV["protocol_version"].to_i : 3)
     Cassie.configure!(
-      :cluster => {:host => 'localhost', :protocol_version => protocol_version,},
+      :cluster => {:host => cassandra_host, port: cassandra_port.to_i, :protocol_version => protocol_version,},
       :keyspaces => {"test" => "cassie_specs"},
       :schema_directory => schema_dir,
       :max_prepared_statements => 3

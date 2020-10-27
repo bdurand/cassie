@@ -10,39 +10,40 @@
 # definition files live. The files should be named "#{abstract_keyspace}.cql". The actual keyspace name will
 # be looked from the keyspace mapping in the configuration.
 class Cassie::Schema
-  TABLES_CQL = "SELECT columnfamily_name FROM system.schema_columnfamilies WHERE keyspace_name = ?".freeze
-  
+  TABLES_CQL = "SELECT table_name FROM system_schema.tables WHERE keyspace_name = ?"
+  VERSION_2_TABLES_CQL = "SELECT columnfamily_name FROM system.schema_columnfamilies WHERE keyspace_name = ?"
+
   CREATE_MATCHER = /\A(?<create>CREATE (TABLE|((CUSTOM )?INDEX)|TYPE|TRIGGER))(?<exist>( IF NOT EXISTS)?) (?<object>[a-z0-9_.]+)/i.freeze
   DROP_MATCHER = /\A(?<drop>DROP (TABLE|INDEX|TYPE|TRIGGER))(?<exist>( IF EXISTS)?) (?<object>[a-z0-9_.]+)/i.freeze
-  
+
   attr_reader :keyspace
-  
+
   class << self
     # Get all the defined schemas.
     def all
       schemas.values
     end
-    
+
     # Find the schema for a keyspace using the abstract name.
     def find(keyspace)
       schemas[keyspace]
     end
-    
+
     # Throw out the cached schemas so they can be reloaded from the configuration.
     def reset!
       @schemas = nil
     end
-    
+
     # Drop a specified keyspace by abstract name. The actual keyspace name will be looked up
     # from the keyspaces in the configuration.
     def drop!(keyspace_name)
       keyspace = Cassie.instance.config.keyspace(keyspace_name)
       raise ArgumentError.new("#{keyspace_name} is not defined as keyspace in the configuration") unless keyspace
-      
+
       drop_keyspace_cql = "DROP KEYSPACE IF EXISTS #{keyspace}"
       Cassie.instance.execute(drop_keyspace_cql)
     end
-    
+
     # Load a specified keyspace by abstract name. The actual keyspace name will be looked up
     # from the keyspaces in the configuration.
     def load!(keyspace_name)
@@ -52,10 +53,10 @@ class Cassie::Schema
       schema_file = File.join(Cassie.instance.config.schema_directory, "#{keyspace_name}.cql")
       raise ArgumentError.new("#{keyspace_name} schema file does not exist at #{schema_file}") unless File.exist?(schema_file)
       schema_statements = File.read(schema_file).split(';').collect{|s| s.strip.chomp(';')}
-      
+
       create_keyspace_cql = "CREATE KEYSPACE IF NOT EXISTS #{keyspace} WITH replication = {'class': 'SimpleStrategy', 'replication_factor' : 1}"
       Cassie.instance.execute(create_keyspace_cql)
-      
+
       schema_statements.each do |statement|
         statement = statement.gsub(/#(.*)$/, '').gsub(/\s+/, ' ').strip
         create_match = statement.match(CREATE_MATCHER)
@@ -77,23 +78,23 @@ class Cassie::Schema
       end
       nil
     end
-    
+
     # Drop all keyspaces defined in the configuration.
     def drop_all!
       Cassie.instance.config.keyspace_names.each do |keyspace|
         drop!(keyspace)
       end
     end
-    
+
     # Drop all keyspaces defined in the configuration.
     def load_all!
       Cassie.instance.config.keyspace_names.each do |keyspace|
         load!(keyspace)
       end
     end
-    
+
     private
-    
+
     def schemas
       unless defined?(@schemas) && @schemas
         schemas = {}
@@ -105,24 +106,27 @@ class Cassie::Schema
       @schemas
     end
   end
-  
+
   def initialize(keyspace)
     @keyspace = keyspace
   end
-  
+
   # Returns a list of tables defined for the schema.
   def tables
     unless defined?(@tables) && @tables
       tables = []
-      results = Cassie.instance.execute(TABLES_CQL, keyspace)
-      results.each do |row|
-        tables << row['columnfamily_name']
+      results = nil
+      begin
+        results = Cassie.instance.execute(TABLES_CQL, keyspace)
+      rescue Cassandra::Errors::InvalidError
+        results = Cassie.instance.execute(VERSION_2_TABLES_CQL, keyspace)
       end
+      tables = results.collect { |row| row.values.first }
       @tables = tables
     end
     @tables
   end
-  
+
   # Truncate the data from a table.
   def truncate!(table)
     statement = Cassie.instance.prepare("TRUNCATE #{keyspace}.#{table}")
