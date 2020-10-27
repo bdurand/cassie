@@ -11,7 +11,7 @@ class Cassie::Railtie < Rails::Railtie
 
     config_file = Rails.root + "config" + "cassie.yml"
     if config_file.exist?
-      options = YAML.safe_load(ERB.new(config_file.read).result)[Rails.env]
+      options = YAML.load(ERB.new(config_file.read).result)[Rails.env] # rubocop:disable Security/YAMLLoad
       if Rails.env.development? || Rails.env.test?
         schema_dir = Rails.root + "db" + "cassandra"
         options["schema_directory"] = schema_dir.to_s if schema_dir.exist?
