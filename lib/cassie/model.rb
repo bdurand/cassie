@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
-require 'active_model'
-require 'active_support/hash_with_indifferent_access'
+require "active_model"
+require "active_support/hash_with_indifferent_access"
 
 # This module provides a simple interface for models backed by Cassandra tables.
 #
@@ -42,15 +42,15 @@ module Cassie::Model
   extend ActiveModel::Callbacks
 
   included do |base|
-    class_attribute :table_name, :instance_reader => false, :instance_writer => false
-    class_attribute :_keyspace, :instance_reader => false, :instance_writer => false
-    class_attribute :_primary_key, :instance_reader => false, :instance_writer => false
-    class_attribute :_columns, :instance_reader => false, :instance_writer => false
-    class_attribute :_column_aliases, :instance_reader => false, :instance_writer => false
-    class_attribute :_ordering_keys, :instance_reader => false, :instance_writer => false
-    class_attribute :_counter_table, :instance_reader => false, :instance_writer => false
-    class_attribute :find_subscribers, :instance_reader => false, :instance_writer => false
-    class_attribute :read_consistency, :instance_reader => false, :instance_writer => false
+    class_attribute :table_name, instance_reader: false, instance_writer: false
+    class_attribute :_keyspace, instance_reader: false, instance_writer: false
+    class_attribute :_primary_key, instance_reader: false, instance_writer: false
+    class_attribute :_columns, instance_reader: false, instance_writer: false
+    class_attribute :_column_aliases, instance_reader: false, instance_writer: false
+    class_attribute :_ordering_keys, instance_reader: false, instance_writer: false
+    class_attribute :_counter_table, instance_reader: false, instance_writer: false
+    class_attribute :find_subscribers, instance_reader: false, instance_writer: false
+    class_attribute :read_consistency, instance_reader: false, instance_writer: false
     class_attribute :write_consistency
     define_model_callbacks :create, :update, :save, :destroy
     self._columns = {}
@@ -112,33 +112,33 @@ module Cassie::Model
       end
 
       self._columns = _columns.merge(name => type_class)
-      self._column_aliases = self._column_aliases.merge(name => name)
+      self._column_aliases = _column_aliases.merge(name => name)
 
       aliased = (as && as.to_s != name.to_s)
       if aliased
-        self._column_aliases = self._column_aliases.merge(as => name)
+        self._column_aliases = _column_aliases.merge(as => name)
       end
 
       if type.to_s == "counter"
         self._counter_table = true
 
-        define_method(name){ instance_variable_get(:"@#{name}") || 0 }
-        define_method("#{name}="){ |value| instance_variable_set(:"@#{name}", value.to_i) }
+        define_method(name) { instance_variable_get(:"@#{name}") || 0 }
+        define_method("#{name}=") { |value| instance_variable_set(:"@#{name}", value.to_i) }
 
-        define_method("increment_#{name}!"){ |amount=1, ttl: nil| send(:adjust_counter!, name, amount, ttl: ttl) }
-        define_method("decrement_#{name}!"){ |amount=1, ttl: nil| send(:adjust_counter!, name, -amount, ttl: ttl) }
+        define_method("increment_#{name}!") { |amount = 1, ttl: nil| send(:adjust_counter!, name, amount, ttl: ttl) }
+        define_method("decrement_#{name}!") { |amount = 1, ttl: nil| send(:adjust_counter!, name, -amount, ttl: ttl) }
         if aliased
-          define_method(as){ send(name) }
-          define_method("increment_#{as}!"){ |amount=1, ttl: nil| send("increment_#{name}!", amount, ttl: ttl) }
-          define_method("decrement_#{as}!"){ |amount=1, ttl: nil| send("increment_#{name}!", amount, ttl: ttl) }
+          define_method(as) { send(name) }
+          define_method("increment_#{as}!") { |amount = 1, ttl: nil| send("increment_#{name}!", amount, ttl: ttl) }
+          define_method("decrement_#{as}!") { |amount = 1, ttl: nil| send("increment_#{name}!", amount, ttl: ttl) }
         end
       else
         attr_reader name
-        define_method("#{name}="){ |value| instance_variable_set(:"@#{name}", self.class.send(:coerce, value, type_class)) }
+        define_method("#{name}=") { |value| instance_variable_set(:"@#{name}", self.class.send(:coerce, value, type_class)) }
         attr_reader name
         if aliased
-          define_method(as){ send(name) }
-          define_method("#{as}="){|value| send("#{name}=", value) }
+          define_method(as) { send(name) }
+          define_method("#{as}=") { |value| send("#{name}=", value) }
         end
       end
     end
@@ -150,7 +150,7 @@ module Cassie::Model
 
     # Returns the internal column name after resolving any aliases.
     def column_name(name_or_alias)
-      name = _column_aliases[name_or_alias] || name_or_alias
+      _column_aliases[name_or_alias] || name_or_alias
     end
 
     # Set the primary key for the table. The value should be set as an array with the
@@ -217,8 +217,8 @@ module Cassie::Model
     # record as it is foundto the block instead of returning them.
     def find_all(where:, select: nil, order: nil, limit: nil, options: nil)
       start_time = Time.now
-      columns = (select ? Array(select).collect{|c| column_name(c)} : column_names)
-      cql = "SELECT #{columns.join(', ')} FROM #{full_table_name}"
+      columns = (select ? Array(select).collect { |c| column_name(c) } : column_names)
+      cql = "SELECT #{columns.join(", ")} FROM #{full_table_name}"
       values = nil
 
       raise ArgumentError.new("Where clause cannot be blank. Pass :all to find all records.") if where.blank?
@@ -227,14 +227,14 @@ module Cassie::Model
       else
         values = []
       end
-      cql = "#{cql} WHERE #{where_clause}" if where_clause
+      cql += " WHERE #{where_clause}" if where_clause
 
       if order
-        cql = "#{cql} ORDER BY #{order}"
+        cql += " ORDER BY #{order}"
       end
 
       if limit
-        cql ="#{cql} LIMIT ?"
+        cql += " LIMIT ?"
         values << Integer(limit)
       end
 
@@ -258,7 +258,7 @@ module Cassie::Model
 
       if find_subscribers && !find_subscribers.empty?
         payload = FindMessage.new(cql, values, options, Time.now - start_time, row_count)
-        find_subscribers.each{|subscriber| subscriber.call(payload)}
+        find_subscribers.each { |subscriber| subscriber.call(payload) }
       end
 
       records
@@ -291,14 +291,14 @@ module Cassie::Model
         options = where.delete(:options)
       end
 
-      cql = "SELECT COUNT(*) FROM #{self.full_table_name}"
+      cql = "SELECT COUNT(*) FROM #{full_table_name}"
       values = nil
 
       if where
         where_clause, values = cql_where_clause(where)
-        cql = "#{cql} WHERE #{where_clause}"
+        cql += " WHERE #{where_clause}"
       else
-        where = connection.prepare(cql)
+        connection.prepare(cql)
       end
 
       results = connection.find(cql, values, consistency_options(read_consistency, options))
@@ -328,7 +328,7 @@ module Cassie::Model
       key_hash.each do |name, value|
         cleanup_up_hash[column_name(name)] = value
       end
-      connection.delete(full_table_name, cleanup_up_hash, :consistency => write_consistency)
+      connection.delete(full_table_name, cleanup_up_hash, consistency: write_consistency)
     end
 
     # All insert, update, and delete calls within the block will be sent as a single
@@ -370,11 +370,11 @@ module Cassie::Model
         conditions_cql = []
         conditions = []
         if from
-          conditions_cql << "#{ordering_key} #{order == :desc ? '<' : '>'} ?"
+          conditions_cql << "#{ordering_key} #{order == :desc ? "<" : ">"} ?"
           conditions << from
         end
         if to
-          conditions_cql << "#{ordering_key} #{order == :desc ? '>' : '<'} ?"
+          conditions_cql << "#{ordering_key} #{order == :desc ? ">" : "<"} ?"
           conditions << to
         end
         key.each do |name, value|
@@ -383,7 +383,7 @@ module Cassie::Model
         end
         conditions.unshift(conditions_cql.join(" AND "))
 
-        results = find_all(:select => [ordering_key], :where => conditions, :limit => limit, :order => order_cql)
+        results = find_all(select: [ordering_key], where: conditions, limit: limit, order: order_cql)
         last_row = results.last if results.size == limit
         last_id = last_row.send(ordering_key) if last_row
 
@@ -411,7 +411,7 @@ module Cassie::Model
         where.each do |column, value|
           col_name = column_name(column)
           if value.is_a?(Array)
-            q = "?#{',?' * (value.size - 1)}"
+            q = "?#{",?" * (value.size - 1)}"
             cql << "#{col_name} IN (#{q})"
             values.concat(value)
           else
@@ -419,7 +419,7 @@ module Cassie::Model
             values << coerce(value, _columns[col_name])
           end
         end
-        [cql.join(' AND '), values]
+        [cql.join(" AND "), values]
       when Array
         [where.first, where[1, where.size]]
       when String
@@ -460,10 +460,10 @@ module Cassie::Model
     def consistency_options(consistency, options)
       if consistency
         if options
-          options = options.merge(:consistency => consistency) if options[:consistency].nil?
+          options = options.merge(consistency: consistency) if options[:consistency].nil?
           options
         else
-          {:consistency => consistency}
+          {consistency: consistency}
         end
       else
         options
@@ -494,7 +494,7 @@ module Cassie::Model
     valid_record = (validate ? valid? : true)
     if valid_record
       run_callbacks(:save) do
-        options = {:consistency => write_consistency, :ttl => (ttl || persistence_ttl)}
+        options = {consistency: write_consistency, ttl: (ttl || persistence_ttl)}
         if persisted?
           run_callbacks(:update) do
             self.class.connection.update(self.class.full_table_name, values_hash, key_hash, options)
@@ -525,7 +525,7 @@ module Cassie::Model
   # Delete a record and call the destroy callbacks.
   def destroy
     run_callbacks(:destroy) do
-      self.class.connection.delete(self.class.full_table_name, key_hash, :consistency => write_consistency)
+      self.class.connection.delete(self.class.full_table_name, key_hash, consistency: write_consistency)
       @persisted = false
       true
     end
@@ -557,7 +557,7 @@ module Cassie::Model
   def key_hash
     hash = {}
     self.class.primary_key.each do |key|
-      hash[key] = self.send(key)
+      hash[key] = send(key)
     end
     hash
   end
@@ -570,7 +570,7 @@ module Cassie::Model
     if amount != 0
       run_callbacks(:update) do
         adjustment = (amount < 0 ? "#{name} = #{name} - #{amount.abs}" : "#{name} = #{name} + #{amount}")
-        options = {:consistency => write_consistency, :ttl => (ttl || persistence_ttl)}
+        options = {consistency: write_consistency, ttl: (ttl || persistence_ttl)}
         self.class.connection.update(self.class.full_table_name, adjustment, key_hash, options)
       end
     end

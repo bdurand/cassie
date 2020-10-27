@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require 'cassandra'
+require "cassandra"
 
 # This class provides a lightweight wrapper around the Cassandra driver. It provides
 # a foundation for maintaining a connection and constructing CQL statements.
@@ -81,9 +81,7 @@ class Cassie
     end
 
     # Set a logger with a Logger compatible object.
-    def logger=(value)
-      @logger = value
-    end
+    attr_writer :logger
   end
 
   def initialize(config)
@@ -100,9 +98,9 @@ class Cassie
   def connect
     start_time = Time.now
     cluster_config = config.cluster
-    cluster_config = cluster_config.merge(:logger => logger) if logger
+    cluster_config = cluster_config.merge(logger: logger) if logger
     cluster = Cassandra.cluster(cluster_config)
-    logger.info("Cassie.connect with #{config.sanitized_cluster} in #{((Time.now - start_time) * 1000).round}ms") if logger
+    logger&.info("Cassie.connect with #{config.sanitized_cluster} in #{((Time.now - start_time) * 1000).round}ms")
     @monitor.synchronize do
       @session = cluster.connect(config.default_keyspace)
       @prepared_statements = {}
@@ -111,9 +109,9 @@ class Cassie
 
   # Close the connections to the Cassandra cluster.
   def disconnect
-    logger.info("Cassie.disconnect from #{config.sanitized_cluster}") if logger
+    logger&.info("Cassie.disconnect from #{config.sanitized_cluster}")
     @monitor.synchronize do
-      @session.close if @session
+      @session&.close
       @session = nil
       @prepared_statements = {}
     end
@@ -212,18 +210,18 @@ class Cassie
     columns = []
     values = []
     values_hash.each do |column, value|
-      if !value.nil?
+      unless value.nil?
         columns << column
         values << value
       end
     end
-    cql = "INSERT INTO #{table} (#{columns.join(', ')}) VALUES (#{question_marks(columns.size)})"
+    cql = "INSERT INTO #{table} (#{columns.join(", ")}) VALUES (#{question_marks(columns.size)})"
 
-    if options && options.include?(:ttl)
+    if options&.include?(:ttl)
       options = options.dup
       ttl = options.delete(:ttl)
       if ttl
-        cql = "#{cql} USING TTL ?"
+        cql += " USING TTL ?"
         values << Integer(ttl)
       end
     end
@@ -253,16 +251,16 @@ class Cassie
 
     cql = "UPDATE #{table}"
 
-    if options && options.include?(:ttl)
+    if options&.include?(:ttl)
       options = options.dup
       ttl = options.delete(:ttl)
       if ttl
-        cql = "#{cql} USING TTL ?"
+        cql += " USING TTL ?"
         values.unshift(Integer(ttl))
       end
     end
 
-    cql = "#{cql} SET #{update_cql.join(', ')} WHERE #{key_cql}"
+    cql += " SET #{update_cql.join(", ")} WHERE #{key_cql}"
 
     batch_or_execute(cql, values, options)
   end
@@ -283,28 +281,28 @@ class Cassie
     start_time = Time.now
     begin
       statement = nil
-      if cql.is_a?(String)
+      statement = if cql.is_a?(String)
         if values.present?
-          statement = prepare(cql)
+          prepare(cql)
         else
-          statement = Cassandra::Statements::Simple.new(cql)
+          Cassandra::Statements::Simple.new(cql)
         end
       else
-        statement = cql
+        cql
       end
 
       if values.present?
         values = Array(values)
-        options = (options ? options.merge(:arguments => values) : {:arguments => values})
+        options = (options ? options.merge(arguments: values) : {arguments: values})
       end
 
       # Set a default consistency from a block context if it isn't explicitly set.
       statement_consistency = current_consistency
       if statement_consistency
         if options
-          options = options.merge(:consistency => statement_consistency) if options[:consistency].nil?
+          options = options.merge(consistency: statement_consistency) if options[:consistency].nil?
         else
-          options = {:consistency => statement_consistency}
+          options = {consistency: statement_consistency}
         end
       end
 
@@ -315,7 +313,7 @@ class Cassie
     ensure
       if statement.is_a?(Cassandra::Statement) && !subscribers.empty?
         payload = Message.new(statement, options, Time.now - start_time)
-        subscribers.each{|subscriber| subscriber.call(payload)}
+        subscribers.each { |subscriber| subscriber.call(payload) }
       end
     end
   end
@@ -347,7 +345,7 @@ class Cassie
   end
 
   def question_marks(size)
-    "?#{',?' * (size - 1)}"
+    "?#{",?" * (size - 1)}"
   end
 
   def key_clause(key_hash)
@@ -357,7 +355,7 @@ class Cassie
       cql << "#{key} = ?"
       values << value
     end
-    [cql.join(' AND '), values]
+    [cql.join(" AND "), values]
   end
 
   # Extract the CQL from a statement
@@ -368,7 +366,7 @@ class Cassie
     elsif statement.respond_to?(:statements) && (previous.nil? || !previous.include?(statement))
       previous ||= []
       previous << statement
-      cql = statement.statements.collect{|s| statement_cql(s, previous)}.join('; ')
+      cql = statement.statements.collect { |s| statement_cql(s, previous) }.join("; ")
     end
     cql
   end

@@ -8,13 +8,13 @@
 class Cassie::Railtie < Rails::Railtie
   initializer "cassie.initialization" do
     Cassie.logger = Rails.logger
-    
-    config_file = Rails.root + 'config' + 'cassie.yml'
+
+    config_file = Rails.root + "config" + "cassie.yml"
     if config_file.exist?
-      options = YAML::load(ERB.new(config_file.read).result)[Rails.env]
+      options = YAML.safe_load(ERB.new(config_file.read).result)[Rails.env]
       if Rails.env.development? || Rails.env.test?
-        schema_dir = Rails.root + 'db' + 'cassandra'
-        options['schema_directory'] = schema_dir.to_s if schema_dir.exist?
+        schema_dir = Rails.root + "db" + "cassandra"
+        options["schema_directory"] = schema_dir.to_s if schema_dir.exist?
       end
       Cassie.configure!(options)
     end
