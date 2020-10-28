@@ -19,7 +19,6 @@ RSpec.configure do |config|
 
   config.expect_with(:rspec) { |c| c.syntax = [:should, :expect] }
 
-  puts "*********** #{ENV.fetch("CASSANDRA_HOST", "localhost")}"
   cassandra_host, cassandra_port = ENV.fetch("CASSANDRA_HOST", "localhost").split(":", 2)
   cassandra_port ||= 9042
   config.before(:suite) do
