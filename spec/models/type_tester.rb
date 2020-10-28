@@ -1,12 +1,12 @@
-require 'securerandom'
+require "securerandom"
 
 class Cassie::TypeTester
   include Cassie::Model
-  
+
   self.table_name = "type_testers"
   self.keyspace = "test"
   self.primary_key = [:id]
-  
+
   column :id, :varchar
   column :int_value, :int
   column :varint_value, :varint
@@ -26,17 +26,17 @@ class Cassie::TypeTester
   column :list_value, :list
   column :set_value, :set
   column :map_value, :map
-  
-  before_create{ self.id = SecureRandom.uuid }
+
+  before_create { self.id = SecureRandom.uuid }
 end
 
 class Cassie::TypeTesterCounter
   include Cassie::Model
-  
+
   self.table_name = "type_tester_counters"
   self.keyspace = "test"
   self.primary_key = [:id]
-  
+
   column :id, :varchar
   column :counter_value, :counter, as: :counter_column
 end

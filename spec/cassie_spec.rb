@@ -1,17 +1,16 @@
-require 'spec_helper'
+require "spec_helper"
 
 describe Cassie do
-  
-  let(:instance){ Cassie.instance }
-  let(:table){ "cassie_specs.things" }
-  
+  let(:instance) { Cassie.instance }
+  let(:table) { "cassie_specs.things" }
+
   describe "prepare" do
     it "should keep a cache of prepared statements" do
       statement_1 = instance.prepare("SELECT * FROM #{table} LIMIT ?")
       statement_2 = instance.prepare("SELECT * FROM #{table} LIMIT ?")
       expect(statement_1.object_id).to eq(statement_2.object_id)
     end
-    
+
     it "should clear the prepared statement cache when reconnecting" do
       statement_1 = instance.prepare("SELECT * FROM #{table} LIMIT ?")
       instance.disconnect
@@ -20,43 +19,43 @@ describe Cassie do
       expect(statement_1.object_id).not_to eq(statement_2.object_id)
     end
   end
-  
+
   describe "find" do
     before :each do
-      instance.insert(table, :owner => 1, :id => 2, :val => 'foo')
-      instance.insert(table, :owner => 10, :id => 2, :val => 'bar')
+      instance.insert(table, owner: 1, id: 2, val: "foo")
+      instance.insert(table, owner: 10, id: 2, val: "bar")
     end
-    
+
     it "should construct a CQL query from the options" do
       results = instance.find("SELECT owner, id, val FROM #{table} WHERE owner = 1")
-      expect(results.rows.collect{|r| r["val"]}).to eq(['foo'])
+      expect(results.rows.collect { |r| r["val"] }).to eq(["foo"])
     end
-    
+
     it "should construct a CQL query from a statement with variables" do
       results = instance.find("SELECT owner, id, val FROM #{table} WHERE owner = ? LIMIT ?", [10, 1])
-      expect(results.rows.collect{|r| r["val"]}).to eq(['bar'])
+      expect(results.rows.collect { |r| r["val"] }).to eq(["bar"])
     end
-    
+
     it "should not batch find statements" do
       instance.batch do
         results = instance.find("SELECT  owner, id, val FROM #{table} WHERE owner = ? LIMIT ?", [10, 1])
-        expect(results.rows.collect{|r| r["val"]}).to eq(['bar'])
+        expect(results.rows.collect { |r| r["val"] }).to eq(["bar"])
       end
     end
   end
-  
+
   describe "insert" do
     it "should insert a row from a hash of values" do
       results = instance.find("SELECT owner, id, val FROM #{table} WHERE owner = ?", 1)
       expect(results.size).to eq(0)
-      instance.insert(table, :owner => 1, :id => 2, :val => 'foo')
+      instance.insert(table, owner: 1, id: 2, val: "foo")
       results = instance.find("SELECT owner, id, val FROM #{table} WHERE owner = ?", 1)
-      expect(results.rows.collect{|r| r['val']}).to eq(['foo'])
+      expect(results.rows.collect { |r| r["val"] }).to eq(["foo"])
     end
-    
+
     it "should add statements to the current batch" do
       instance.batch do
-        instance.insert(table, :owner => 1, :id => 2, :val => 'foo')
+        instance.insert(table, owner: 1, id: 2, val: "foo")
         results = instance.find("SELECT owner, id, val FROM #{table} WHERE owner = ?", 1)
         expect(results.size).to eq(0)
       end
@@ -64,145 +63,145 @@ describe Cassie do
       expect(results.size).to eq(1)
     end
   end
-  
+
   describe "update" do
     it "should update a row from a hash of values and a primary key" do
-      instance.insert(table, :owner => 1, :id => 2, :val => 'foo')
-      instance.update(table, {:val => 'bar'}, :owner => 1, :id => 2)
+      instance.insert(table, owner: 1, id: 2, val: "foo")
+      instance.update(table, {val: "bar"}, owner: 1, id: 2)
       results = instance.find("SELECT owner, id, val FROM #{table} WHERE owner = ?", 1)
-      expect(results.rows.collect{|r| r["val"]}).to eq(['bar'])
+      expect(results.rows.collect { |r| r["val"] }).to eq(["bar"])
     end
 
     it "should add statements to the current batch" do
-      instance.insert(table, :owner => 1, :id => 2, :val => 'foo')
+      instance.insert(table, owner: 1, id: 2, val: "foo")
       instance.batch do
-        instance.update(table, {:val => 'bar'}, :owner => 1, :id => 2)
+        instance.update(table, {val: "bar"}, owner: 1, id: 2)
         results = instance.find("SELECT owner, id, val FROM #{table} WHERE owner = ?", 1)
-        expect(results.rows.collect{|r| r['val']}).to eq(['foo'])
+        expect(results.rows.collect { |r| r["val"] }).to eq(["foo"])
       end
       results = instance.find("SELECT owner, id, val FROM #{table} WHERE owner = ?", 1)
-      expect(results.rows.collect{|r| r['val']}).to eq(['bar'])
+      expect(results.rows.collect { |r| r["val"] }).to eq(["bar"])
     end
   end
-  
+
   describe "delete" do
     it "should update a row from a primary key hash" do
-      instance.insert(table, :owner => 1, :id => 2, :val => 'foo')
+      instance.insert(table, owner: 1, id: 2, val: "foo")
       expect(instance.find("SELECT owner, id, val FROM #{table} WHERE owner = ?", 1).size).to eq(1)
-      instance.delete(table, :owner => 1)
+      instance.delete(table, owner: 1)
       expect(instance.find("SELECT owner, id, val FROM #{table} WHERE owner = ?", 1).size).to eq(0)
     end
 
     it "should add statements to the current batch" do
-      instance.insert(table, :owner => 1, :id => 2, :val => 'foo')
+      instance.insert(table, owner: 1, id: 2, val: "foo")
       instance.batch do
-        instance.delete(table, :owner => 1)
+        instance.delete(table, owner: 1)
         expect(instance.find("SELECT owner, id, val FROM #{table} WHERE owner = ?", 1).size).to eq(1)
       end
       expect(instance.find("SELECT owner, id, val FROM #{table} WHERE owner = ?", 1).size).to eq(0)
     end
   end
-  
+
   describe "execute" do
     before :each do
-      instance.insert(table, :owner => 1, :id => 2, :val => 'foo')
+      instance.insert(table, owner: 1, id: 2, val: "foo")
     end
-    
+
     it "should execute a plain CQL statement" do
       expect(instance.execute("SELECT owner, id, val FROM #{table} WHERE owner = 1").size).to eq(1)
     end
-    
+
     it "should execute a prepared statement" do
       statement = instance.prepare("SELECT owner, id, val FROM #{table} WHERE owner = 1")
       expect(instance.execute(statement).size).to eq(1)
     end
-    
+
     it "should prepare and execute a CQL statement when values are provided" do
       expect(instance.execute("SELECT owner, id, val FROM #{table} WHERE owner = ?", [1]).size).to eq(1)
     end
-    
+
     it "should call subscribers with details about the call" do
       instance.subscribers.clear
       begin
         messages = []
-        instance.subscribers << lambda{|details| messages << details}
+        instance.subscribers << lambda { |details| messages << details }
 
         instance.execute("SELECT owner, id, val FROM #{table} WHERE owner = ?", [1])
         expect(messages.size).to eq(1)
         message = messages.shift
         expect(message.statement).to be_a(Cassandra::Statement)
-        expect(message.options).to eq({:arguments => [1], :consistency => :local_one})
+        expect(message.options).to eq({arguments: [1], consistency: :local_one})
         expect(message.elapsed_time).to be_a(Float)
 
         instance.execute("SELECT owner, id, val FROM #{table} WHERE owner = 1")
         expect(messages.size).to eq(1)
         message = messages.shift
         expect(message.statement).to be_a(Cassandra::Statement)
-        expect(message.options).to eq({:consistency => :local_one})
+        expect(message.options).to eq({consistency: :local_one})
         expect(message.elapsed_time).to be_a(Float)
 
         instance.batch do
-          instance.insert(table, :owner => 1, :id => 2, :val => 'foo')
-          instance.delete(table, :owner => 1)
+          instance.insert(table, owner: 1, id: 2, val: "foo")
+          instance.delete(table, owner: 1)
         end
         expect(messages.size).to eq(1)
         message = messages.shift
         expect(message.statement).to be_a(Cassandra::Statements::Batch)
-        expect(message.options).to eq({:consistency => :local_one})
+        expect(message.options).to eq({consistency: :local_one})
         expect(message.elapsed_time).to be_a(Float)
       ensure
         instance.subscribers.clear
       end
     end
   end
-  
+
   describe "consistency" do
-    let(:session){ instance.send(:session) }
-    
+    let(:session) { instance.send(:session) }
+
     it "should not specify query consistency by default" do
-      expect(session).to receive(:execute).with(Cassandra::Statements::Simple.new("SELECT * FROM dual"), {:consistency => :local_one})
+      expect(session).to receive(:execute).with(Cassandra::Statements::Simple.new("SELECT * FROM dual"), {consistency: :local_one})
       instance.execute("SELECT * FROM dual")
       expect(instance.current_consistency).to eq :local_one
     end
-    
+
     it "should allow specifying the consistency in a block" do
-      expect(session).to receive(:execute).with(Cassandra::Statements::Simple.new("SELECT * FROM dual"), {:consistency => :one})
+      expect(session).to receive(:execute).with(Cassandra::Statements::Simple.new("SELECT * FROM dual"), {consistency: :one})
       Cassie.consistency(:one) do
         instance.execute("SELECT * FROM dual")
         expect(instance.current_consistency).to eq :one
       end
     end
-    
+
     it "should allow specifying the consistency in a block if statement consistency is explicitly nil" do
-      expect(session).to receive(:execute).with(Cassandra::Statements::Simple.new("SELECT * FROM dual"), {:consistency => :one})
+      expect(session).to receive(:execute).with(Cassandra::Statements::Simple.new("SELECT * FROM dual"), {consistency: :one})
       Cassie.consistency(:one) do
-        instance.execute("SELECT * FROM dual", nil, :consistency => nil)
+        instance.execute("SELECT * FROM dual", nil, consistency: nil)
         expect(instance.current_consistency).to eq :one
       end
     end
-    
+
     it "should use the consistency specified to execute if provided" do
-      expect(session).to receive(:execute).with(Cassandra::Statements::Simple.new("SELECT * FROM dual"), {:consistency => :two})
+      expect(session).to receive(:execute).with(Cassandra::Statements::Simple.new("SELECT * FROM dual"), {consistency: :two})
       Cassie.consistency(:one) do
-        instance.execute("SELECT * FROM dual", nil, :consistency => :two)
+        instance.execute("SELECT * FROM dual", nil, consistency: :two)
         expect(instance.current_consistency).to eq :one
       end
     end
-    
+
     it "should use the consistency passed in the batch for all statements in the batch" do
-      expect(session).to receive(:execute).with(an_instance_of(Cassandra::Statements::Batch::Logged), {:consistency => :two})
-      Cassie.instance.batch(:consistency => :two) do
-        instance.insert(table, :owner => 1, :id => 2, :val => 'foo')
+      expect(session).to receive(:execute).with(an_instance_of(Cassandra::Statements::Batch::Logged), {consistency: :two})
+      Cassie.instance.batch(consistency: :two) do
+        instance.insert(table, owner: 1, id: 2, val: "foo")
       end
     end
-    
+
     it "should be able to specify a global consistancy" do
-      expect(session).to receive(:execute).with(Cassandra::Statements::Simple.new("SELECT * FROM dual"), {:consistency => :one})
-      expect(session).to receive(:execute).with(Cassandra::Statements::Simple.new("SELECT COUNT(*) FROM dual"), {:consistency => :local_quorum})
-      expect(session).to receive(:execute).with(Cassandra::Statements::Simple.new("SELECT COUNT(1) FROM dual"), {:consistency => :local_one})
+      expect(session).to receive(:execute).with(Cassandra::Statements::Simple.new("SELECT * FROM dual"), {consistency: :one})
+      expect(session).to receive(:execute).with(Cassandra::Statements::Simple.new("SELECT COUNT(*) FROM dual"), {consistency: :local_quorum})
+      expect(session).to receive(:execute).with(Cassandra::Statements::Simple.new("SELECT COUNT(1) FROM dual"), {consistency: :local_one})
       instance.execute("SELECT COUNT(1) FROM dual", nil)
       expect(instance.current_consistency).to eq :local_one
-      
+
       begin
         instance.consistency = :local_quorum
         expect(instance.current_consistency).to eq :local_quorum

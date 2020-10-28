@@ -1,3 +1,8 @@
+## 1.2.0
+
+* Update schema queries to support Cassandra 3.x+
+* Require Ruby 2.4 or greater
+
 ## 1.1.1
 * Update dependencies to support Rails 5.
 

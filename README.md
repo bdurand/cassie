@@ -1,5 +1,6 @@
 [![Build Status](https://travis-ci.org/weheartit/cassie.svg?branch=master)](https://travis-ci.org/weheartit/cassie)
 [![Maintainability](https://api.codeclimate.com/v1/badges/129ede20094ea298c687/maintainability)](https://codeclimate.com/github/weheartit/cassie/maintainability)
+[![Ruby Style Guide](https://img.shields.io/badge/code_style-standard-brightgreen.svg)](https://github.com/testdouble/standard)
 
 # Cassie
 

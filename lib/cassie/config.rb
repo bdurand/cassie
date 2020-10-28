@@ -21,7 +21,7 @@
 class Cassie::Config
   attr_reader :cluster
   attr_accessor :max_prepared_statements, :schema_directory, :default_keyspace
-  
+
   def initialize(options = {})
     options = options.symbolize_keys
     @cluster = (options[:cluster] || {}).symbolize_keys
@@ -30,27 +30,27 @@ class Cassie::Config
     @schema_directory = options[:schema_directory]
     @default_keyspace = options[:default_keyspace]
   end
-  
+
   # Get the actual keyspace mapped to the abstract name.
   def keyspace(name)
     @keyspaces[name.to_s] || name.to_s
   end
-  
+
   # Get the list of keyspaces defined for the cluster.
   def keyspaces
     @keyspaces.values
   end
-  
+
   # Get the list of abstract keyspace names.
   def keyspace_names
     @keyspaces.keys
   end
-  
+
   # Add a mapping of a name to a keyspace.
   def add_keyspace(name, value)
     @keyspaces[name.to_s] = value
   end
-  
+
   # Return the cluster options without passwords or tokens. Used for logging.
   def sanitized_cluster
     options = cluster.dup
@@ -61,5 +61,4 @@ class Cassie::Config
     options[:logger] = options[:logger].class.name if options.include?(:logger)
     options
   end
-  
 end
