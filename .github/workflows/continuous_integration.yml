@@ -39,6 +39,7 @@ jobs:
             cassandra_version: "2"
           - ruby: 2.7
             job: standardrb
+            cassandra_version: "latest"
     steps:
       - name: checkout
         uses: actions/checkout@v2
