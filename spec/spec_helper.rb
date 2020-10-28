@@ -33,12 +33,14 @@ RSpec.configure do |config|
 
     attempts = 0
     loop do
-      Cassie::Schema.load_all!
-      break
-    rescue Cassandra::Errors::NoHostsAvailable => e
-      attempts += 1
-      raise e if attempts > 4
-      sleep(5)
+      begin
+        Cassie::Schema.load_all!
+        break
+      rescue Cassandra::Errors::NoHostsAvailable => e
+        attempts += 1
+        raise e if attempts > 30
+        sleep(1)
+      end
     end
 
     Cassie::Testing.prepare!
