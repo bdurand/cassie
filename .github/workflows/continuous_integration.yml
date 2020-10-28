@@ -12,7 +12,7 @@ env:
   BUNDLE_PATH: vendor/bundle
   BUNDLE_JOBS: 3
   BUNDLE_RETRY: 3
-  CASSANDRA_VERSION: 4
+  CASSANDRA_HOST: cassandra
 jobs:
   specs:
     name: ${{ matrix.job }} ruby-${{ matrix.ruby }} ${{ matrix.activemodel && format('activemodel-{0}', matrix.activemodel) }} cassandra-${{ matrix.cassandra_version }}
@@ -26,16 +26,16 @@ jobs:
         ruby: [2.7]
         activemodel: [6]
         job: [rspec]
-        cassandra_version: [4]
+        cassandra_version: ["4.0"]
         include:
           - ruby: 2.6
             activemodel: 5
             job: rspec
-            cassandra_version: 3
+            cassandra_version: "3"
           - ruby: 2.4
             activemodel: 4
             job: rspec
-            cassandra_version: 2
+            cassandra_version: "2"
           - ruby: 2.7
             job: standardrb
     steps:
