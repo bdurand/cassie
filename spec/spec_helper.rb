@@ -30,7 +30,17 @@ RSpec.configure do |config|
       schema_directory: schema_dir,
       max_prepared_statements: 3
     )
-    Cassie::Schema.load_all!
+
+    attempts = 0
+    loop do
+      Cassie::Schema.load_all!
+      break
+    rescue Cassandra::Errors::NoHostsAvailable => e
+      attempts += 1
+      raise e if attempts > 4
+      sleep(5)
+    end
+
     Cassie::Testing.prepare!
   end
 
