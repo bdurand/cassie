@@ -6,5 +6,5 @@ group :development, :test do
   gem "rake"
   gem "rspec"
   gem "appraisal"
-  gem "standard", "~>0.8.1"
+  gem "standard", "~>1.0"
 end

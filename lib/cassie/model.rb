@@ -451,7 +451,7 @@ module Cassie::Model
       elsif type_class == Cassandra::Types::Set
         Set.new(value)
       elsif type_class == Cassandra::Types::Map
-        Hash[value]
+        value.to_h
       else
         type_class.new(value)
       end
@@ -554,7 +554,9 @@ module Cassie::Model
 
   # Returns a hash representing the primary key value.
   def primary_key
-    self.class.primary_key.inject({}) { |hash, name| hash[name] = self.send(name); hash }
+    self.class.primary_key.each_with_object({}) { |name, hash|
+      hash[name] = send(name)
+    }
   end
 
   # Reloads the record in memory.

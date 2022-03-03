@@ -49,28 +49,28 @@ GEM
       diff-lcs (>= 1.2.0, < 2.0)
       rspec-support (~> 3.11.0)
     rspec-support (3.11.0)
-    rubocop (1.0.0)
+    rubocop (1.25.1)
       parallel (~> 1.10)
-      parser (>= 2.7.1.5)
+      parser (>= 3.1.0.0)
       rainbow (>= 2.2.2, < 4.0)
-      regexp_parser (>= 1.8)
+      regexp_parser (>= 1.8, < 3.0)
       rexml
-      rubocop-ast (>= 0.6.0)
+      rubocop-ast (>= 1.15.1, < 2.0)
       ruby-progressbar (~> 1.7)
-      unicode-display_width (>= 1.4.0, < 2.0)
+      unicode-display_width (>= 1.4.0, < 3.0)
     rubocop-ast (1.16.0)
       parser (>= 3.1.1.0)
-    rubocop-performance (1.8.1)
-      rubocop (>= 0.87.0)
+    rubocop-performance (1.13.2)
+      rubocop (>= 1.7.0, < 2.0)
       rubocop-ast (>= 0.4.0)
     ruby-progressbar (1.11.0)
-    standard (0.8.1)
-      rubocop (= 1.0.0)
-      rubocop-performance (= 1.8.1)
+    standard (1.7.2)
+      rubocop (= 1.25.1)
+      rubocop-performance (= 1.13.2)
     thor (1.2.1)
     tzinfo (2.0.4)
       concurrent-ruby (~> 1.0)
-    unicode-display_width (1.8.0)
+    unicode-display_width (2.1.0)
     zeitwerk (2.5.4)
 
 PLATFORMS
@@ -81,7 +81,7 @@ DEPENDENCIES
   bundler (~> 2.0)
   rake
   rspec
-  standard (~> 0.8.1)
+  standard (~> 1.0)
   whi-cassie!
 
 BUNDLED WITH
