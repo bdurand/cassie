@@ -24,22 +24,23 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        ruby: [2.7]
-        activemodel: [6]
+        ruby: ["3.0"]
+        activemodel: ["original"]
         job: [rspec]
-        cassandra_version: ["4.0"]
+        cassandra_version: ["latest"]
         include:
-          - ruby: 2.6
-            activemodel: 5
+          - ruby: "2.6"
+            activemodel: "5"
             job: rspec
             cassandra_version: "3"
-          - ruby: 2.4
-            activemodel: 4
+          - ruby: "2.4"
+            activemodel: "4"
             job: rspec
             cassandra_version: "2"
-          - ruby: 2.7
+          - ruby: "2.7"
+            activemodel: "6"
+          - ruby: "3.0"
             job: standardrb
-            cassandra_version: "latest"
     steps:
       - name: checkout
         uses: actions/checkout@v2
