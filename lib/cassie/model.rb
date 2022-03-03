@@ -552,6 +552,13 @@ module Cassie::Model
     hash
   end
 
+  # Mass set attributes from a hash.
+  def attributes=(values)
+    values.each do |name, value|
+      send("#{name}=", value)
+    end
+  end
+
   # Returns a hash representing the primary key value.
   def primary_key
     self.class.primary_key.each_with_object({}) { |name, hash|
