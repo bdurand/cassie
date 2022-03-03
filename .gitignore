@@ -5,4 +5,5 @@ rdoc
 .tm_properties
 .DS_Store
 .env
+Gemfile.lock
 gemfiles/*.lock
