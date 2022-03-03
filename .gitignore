@@ -4,3 +4,4 @@ rdoc
 *.rbc
 .tm_properties
 .DS_Store
+.env

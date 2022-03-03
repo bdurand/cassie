@@ -1,3 +1,7 @@
+## 1.3.0
+
+* Add update, update!, primary_key, and reload methods to models.
+
 ## 1.2.0
 
 * Update schema queries to support Cassandra 3.x+

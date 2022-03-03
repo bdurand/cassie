@@ -531,6 +531,18 @@ module Cassie::Model
     end
   end
 
+  # Update a record with the specified attributes. Returns false the record is invalid.
+  def update(values)
+    self.attributes = values
+    save
+  end
+
+  # Update a record with the specified attributes and raise an error if it is invalid.
+  def update!(values)
+    self.attributes = values
+    save!
+  end
+
   # Returns a hash of column to values. Column names will be symbols.
   def attributes
     hash = {}
@@ -538,6 +550,16 @@ module Cassie::Model
       hash[name] = send(name)
     end
     hash
+  end
+
+  # Returns a hash representing the primary key value.
+  def primary_key
+    self.class.primary_key.inject({}) { |hash, name| hash[name] = self.send(name); hash }
+  end
+
+  # Reloads the record in memory.
+  def reload
+    self.class.find(primary_key)
   end
 
   # Subclasses can override this method to provide a TTL on the persisted record.

@@ -142,11 +142,15 @@ describe Cassie::Model do
     it "should get and set attributes" do
       record = Cassie::Thing.new(owner: 1, id: 2, val: "foo")
       expect(record.attributes).to eq({owner: 1, id: 2, val: "foo"})
+      record.attributes = {owner: 2, id: 3, val: "bar"}
+      expect(record.attributes).to eq({owner: 2, id: 3, val: "bar"})
     end
 
     it "should get and set attributes using human readable names" do
       record = Cassie::Thing.new(owner: 1, identifier: 2, value: "foo")
       expect(record.attributes).to eq({owner: 1, id: 2, val: "foo"})
+      record.attributes = {owner: 2, identifier: 3, val: "bar"}
+      expect(record.attributes).to eq({owner: 2, id: 3, val: "bar"})
     end
   end
 
@@ -191,6 +195,25 @@ describe Cassie::Model do
       expect(record.persisted?).to eq(true)
       expect(record.callbacks).to eq([:save, :create])
       expect(Cassie::Thing.find(owner: 1, id: 2)).to eq(record)
+    end
+  end
+
+  describe "update" do
+    it "should set attributes and save" do
+      record = Cassie::Thing.create(owner: 1, id: 2, val: "foo")
+      record.update(owner: 2)
+      record.reload
+      expect(record.owner).to eq 2
+      record.update!(owner: 3)
+      record.reload
+      expect(record.owner).to eq 3
+    end
+  end
+
+  describe "primary_key" do
+    it "should return the primary key as a hash" do
+      record = Cassie::Thing.create(owner: 1, id: 2, val: "foo")
+      expect(record.primary_key).to eq({owner: 1, id: 2})
     end
   end
 
