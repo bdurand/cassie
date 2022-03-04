@@ -38,7 +38,7 @@ RSpec.configure do |config|
         break
       rescue Cassandra::Errors::NoHostsAvailable => e
         attempts += 1
-        raise e if attempts > 30
+        raise e if attempts > 60
         sleep(1)
       end
     end
