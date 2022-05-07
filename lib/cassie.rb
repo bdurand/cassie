@@ -307,9 +307,6 @@ class Cassie
       end
 
       session.execute(statement, options || {})
-    rescue Cassandra::Errors::IOError => e
-      disconnect
-      raise e
     ensure
       if statement.is_a?(Cassandra::Statement) && !subscribers.empty?
         payload = Message.new(statement, options, Time.now - start_time)
