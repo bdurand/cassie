@@ -102,8 +102,10 @@ class Cassie
     cluster = Cassandra.cluster(cluster_config)
     logger&.info("Cassie.connect with #{config.sanitized_cluster} in #{((Time.now - start_time) * 1000).round}ms")
     @monitor.synchronize do
-      @session = cluster.connect(config.default_keyspace)
-      @prepared_statements = {}
+      unless @session
+        @session = cluster.connect(config.default_keyspace)
+        @prepared_statements = {}
+      end
     end
   end
 
