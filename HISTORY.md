@@ -1,3 +1,8 @@
+## 1.3.1
+
+* Remove automatic reconnect on I/O errors.
+* Handle race condition on connecting when already connected.
+
 ## 1.3.0
 
 * Add update, update!, primary_key, and reload methods to models.

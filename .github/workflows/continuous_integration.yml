@@ -13,6 +13,22 @@ env:
   BUNDLE_JOBS: 3
   BUNDLE_RETRY: 3
 jobs:
+  standard:
+    name: StandardRB
+    runs-on: ubuntu-latest
+    steps:
+      - name: checkout
+        uses: actions/checkout@v2
+      - name: set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: 3.0
+      - name: install dependencies
+        run:  bundle install
+      - name: standardrb
+        if:   matrix.job == 'standardrb'
+        run:  bundle exec rake standard
+    
   specs:
     name: ${{ matrix.job }} ruby-${{ matrix.ruby }} ${{ matrix.activemodel && format('activemodel-{0}', matrix.activemodel) }} cassandra-${{ matrix.cassandra_version }}
     runs-on: ubuntu-latest
@@ -24,7 +40,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        ruby: ["3.0"]
+        ruby: ["3.1"]
         activemodel: ["original"]
         job: [rspec]
         cassandra_version: ["latest"]
@@ -40,7 +56,7 @@ jobs:
           - ruby: "2.7"
             activemodel: "6"
           - ruby: "3.0"
-            job: standardrb
+            activemodel: "7"
     steps:
       - name: checkout
         uses: actions/checkout@v2
@@ -59,6 +75,3 @@ jobs:
       - name: specs
         if:   matrix.job == 'rspec'
         run:  bundle exec rake spec
-      - name: standardrb
-        if:   matrix.job == 'standardrb'
-        run:  bundle exec rake standard
