@@ -133,7 +133,7 @@ describe Cassie::Model do
   describe "batch" do
     it "should delegate to Cassie.batch using the write consistency" do
       expect(Cassie::Thing.connection).to be_a(Cassie)
-      expect(Cassie::Thing.connection).to receive(:batch).with(consistency: :quorum).and_call_original
+      expect(Cassie::Thing.connection).to receive(:batch).and_call_original
       Cassie::Thing.batch {}
     end
   end

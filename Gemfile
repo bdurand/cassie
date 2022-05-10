@@ -4,7 +4,7 @@ gemspec
 
 group :development, :test do
   gem "rake"
-  gem "rspec", "~> 3.10.0"
+  gem "rspec"
   gem "appraisal"
   gem "standard", "~>1.0"
 end
