@@ -128,7 +128,9 @@ class Cassie
   # like passenger or unicorn you should call this method after forking.
   def reconnect
     disconnect
-    connect
+    @monitor.synchronize do
+      connect unless connected?
+    end
   end
 
   # Prepare a CQL statement for repeate execution. Prepared statements
@@ -329,7 +331,13 @@ class Cassie
   end
 
   def session
-    connect unless connected?
+    unless connected?
+      # Check again inside the monitor lock so we don't get in a race condition
+      # where another thread has already established the connection.
+      @monitor.synchronize do
+        connect unless connected?
+      end
+    end
     @session
   end
 

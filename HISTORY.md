@@ -1,3 +1,7 @@
+## 1.3.2
+
+* Improved synchronization on reconnect logic.
+
 ## 1.3.1
 
 * Remove automatic reconnect on I/O errors.
