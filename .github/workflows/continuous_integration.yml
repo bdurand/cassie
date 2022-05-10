@@ -40,7 +40,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        ruby: ["3.1"]
+        ruby: ["3.0"]
         activemodel: ["original"]
         job: [rspec]
         cassandra_version: ["latest"]
