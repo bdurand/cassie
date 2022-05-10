@@ -28,7 +28,7 @@ jobs:
       - name: standardrb
         if:   matrix.job == 'standardrb'
         run:  bundle exec rake standard
-    
+
   specs:
     name: ${{ matrix.job }} ruby-${{ matrix.ruby }} ${{ matrix.activemodel && format('activemodel-{0}', matrix.activemodel) }} cassandra-${{ matrix.cassandra_version }}
     runs-on: ubuntu-latest
@@ -40,10 +40,10 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        ruby: ["3.1"]
-        activemodel: ["original"]
-        job: [rspec]
-        cassandra_version: ["latest"]
+        ruby: "3.1"
+        activemodel: "original"
+        job: rspec
+        cassandra_version: "latest"
         include:
           - ruby: "2.6"
             activemodel: "5"
