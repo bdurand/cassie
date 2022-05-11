@@ -1,3 +1,8 @@
+## 1.3.3
+
+* Restore automatic reconnect on dead connections.
+* Handle race condition on reconnect logic.
+
 ## 1.3.2
 
 * Improved synchronization on reconnect logic.

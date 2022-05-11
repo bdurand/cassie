@@ -112,11 +112,13 @@ class Cassie
   # Close the connections to the Cassandra cluster.
   def disconnect
     logger&.info("Cassie.disconnect from #{config.sanitized_cluster}")
+    old_session = nil
     @monitor.synchronize do
-      @session&.close
+      old_session = @session
       @session = nil
       @prepared_statements = {}
     end
+    old_session&.close
   end
 
   # Return true if the connection to the Cassandra cluster has been established.
@@ -127,9 +129,12 @@ class Cassie
   # Force reconnection. If you're using this code in conjunction in a forking server environment
   # like passenger or unicorn you should call this method after forking.
   def reconnect
-    disconnect
+    existing_session = @session
     @monitor.synchronize do
-      connect unless connected?
+      if @session == existing_session
+        disconnect
+        connect
+      end
     end
   end
 
@@ -311,6 +316,9 @@ class Cassie
       end
 
       session.execute(statement, options || {})
+    rescue e => Cassandra::Errors::NoHostsAvailable
+      reconnect
+      raise e
     ensure
       if statement.is_a?(Cassandra::Statement) && !subscribers.empty?
         payload = Message.new(statement, options, Time.now - start_time)
