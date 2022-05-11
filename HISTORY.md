@@ -1,4 +1,8 @@
-## 1.3.3
+## 1.3.4
+
+* Fix syntax error.
+
+## 1.3.3 (yanked)
 
 * Restore automatic reconnect on dead connections.
 * Handle race condition on reconnect logic.

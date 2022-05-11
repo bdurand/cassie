@@ -316,7 +316,7 @@ class Cassie
       end
 
       session.execute(statement, options || {})
-    rescue e => Cassandra::Errors::NoHostsAvailable
+    rescue Cassandra::Errors::NoHostsAvailable => e
       reconnect
       raise e
     ensure
